@@ -27,7 +27,7 @@ export default function LoginPage() {
         // 🔹 Login logic
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
           method: "POST",
-          headers: { 
+          headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
           body: new URLSearchParams({
@@ -50,14 +50,14 @@ export default function LoginPage() {
         // Simpan token JWT dari backend
         const token = result.data.token
         localStorage.setItem("token", token)
-        
+
         // Jika ada rememberMe, simpan di localStorage
         if (rememberMe) {
           localStorage.setItem("rememberMe", "true")
         }
 
         setStatus("success")
-        
+
         // Handle jika perlu update password
         if (result.data.isSameCredentials) {
           setMessage("Login berhasil! Silakan update password Anda.")
@@ -69,7 +69,7 @@ export default function LoginPage() {
 
         // Debug: Log role yang diterima
         console.log('User role:', result.data.role)
-        
+
         // Redirect berdasarkan role dari response backend
         const userRole = result.data.role?.toLowerCase()
         console.log('Redirecting to role:', userRole) // Debug log
@@ -77,7 +77,7 @@ export default function LoginPage() {
         // Gunakan router.replace bukan router.push untuk menghindari history stack
         switch (userRole) {
           case 'admin':
-            setTimeout(() => router.replace('/dashboard'), 500)
+            setTimeout(() => router.replace('/teacher'), 500)
             break
           case 'teacher':
             setTimeout(() => router.replace('/beranda'), 500)
@@ -103,7 +103,7 @@ export default function LoginPage() {
         // Register API call
         const registerResponse = await fetch("http://localhost:3001/api/v1/register", {
           method: "POST",
-          headers: { 
+          headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -135,8 +135,8 @@ export default function LoginPage() {
         error instanceof Error
           ? error.message
           : typeof error === 'string'
-          ? error
-          : 'Terjadi kesalahan. Silakan coba lagi.'
+            ? error
+            : 'Terjadi kesalahan. Silakan coba lagi.'
       setMessage(errMsg)
       setTimeout(() => setStatus("idle"), 4000)
     }
@@ -175,17 +175,15 @@ export default function LoginPage() {
           <div className="flex w-full bg-gray-100 rounded-full mb-6">
             <button
               onClick={() => setIsLogin(true)}
-              className={`w-1/2 py-2 text-sm font-medium rounded-full transition-all ${
-                isLogin ? 'bg-white shadow text-[#0041A3]' : 'text-gray-500'
-              }`}
+              className={`w-1/2 py-2 text-sm font-medium rounded-full transition-all ${isLogin ? 'bg-white shadow text-[#0041A3]' : 'text-gray-500'
+                }`}
             >
               Masuk
             </button>
             <button
               onClick={() => setIsLogin(false)}
-              className={`w-1/2 py-2 text-sm font-medium rounded-full transition-all ${
-                !isLogin ? 'bg-white shadow text-[#0041A3]' : 'text-gray-500'
-              }`}
+              className={`w-1/2 py-2 text-sm font-medium rounded-full transition-all ${!isLogin ? 'bg-white shadow text-[#0041A3]' : 'text-gray-500'
+                }`}
             >
               Daftar
             </button>
@@ -318,11 +316,10 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={status === "loading"}
-              className={`w-full py-3 rounded-lg font-medium text-white transition-colors flex items-center justify-center gap-2 ${
-                status === "loading"
+              className={`w-full py-3 rounded-lg font-medium text-white transition-colors flex items-center justify-center gap-2 ${status === "loading"
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-[#0041A3] hover:bg-blue-800'
-              }`}
+                }`}
             >
               {status === "loading" ? (
                 <>

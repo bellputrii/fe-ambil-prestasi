@@ -1,7 +1,7 @@
-import { AppSidebar } from '@/components/app-sidebar';
-import { SiteHeader } from '@/components/site-header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { ThemeProvider } from '@/components/theme-provider';
+import { AdminNav } from '@/components/admin-nav';
 import React from 'react';
+import "./global.css";
 
 export default function DashboardLayout({
   children,
@@ -9,19 +9,22 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="light"
+      forcedTheme="light"
+      disableTransitionOnChange
     >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        {children}
-      </SidebarInset>
-    </SidebarProvider>
+      <div className="min-h-screen bg-background font-sans antialiased">
+        <div className="relative flex min-h-screen flex-col">
+          <header className="sticky top-0 z-50">
+            <div className="relative">
+              <AdminNav />
+            </div>
+          </header>
+          <main className="flex-1">{children}</main>
+        </div>
+      </div>
+    </ThemeProvider>
   );
 }

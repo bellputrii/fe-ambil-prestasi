@@ -57,53 +57,60 @@ export function TeacherManagementContent() {
 
     return (
         <>
-            {/* Page Header */}
-            <div className="px-4 lg:px-6">
-                <div className="space-y-2">
-                    <h1 className="text-3xl font-bold tracking-tight">
-                        Manajemen Guru
-                    </h1>
-                    <p className="text-muted-foreground">
-                        Kelola data guru dan informasi profil mereka
-                        {meta && (
-                            <span className="ml-2 text-sm">
-                                ({meta.totalItems} total guru)
-                            </span>
+            <div className="h-full flex flex-col">
+
+                {/* Main Content */}
+                <div className="flex-1 space-y-4 p-8 pt-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight">Manajemen Mentor</h1>
+                            <p className="text-muted-foreground">
+                                Kelola data mentor dan informasi profil mereka
+                                {meta && (
+                                    <span className="ml-2">
+                                        ({meta.totalItems} total mentor)
+                                    </span>
+                                )}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        {/* Loading State */}
+                        {isLoading && (
+                            <TeacherTableSkeleton
+                                searchValue={searchValue}
+                                onSearchChange={handleSearchChange}
+                                onAddClick={handleOpenAddModal}
+                                meta={meta || undefined}
+                                onPageChange={handlePageChange}
+                            />
                         )}
-                    </p>
+
+                        {/* Error State */}
+                        {!isLoading && error && (
+                            <ErrorState
+                                message="Terjadi kesalahan saat memuat data mentor. Silakan coba lagi."
+                                onRetry={refetch}
+                                title="Gagal Memuat Data"
+                            />
+                        )}
+
+                        {/* Data Table */}
+                        {!isLoading && !error && (
+                            <TeacherTable
+                                data={teachers}
+                                onViewDetail={handleViewDetail}
+                                onAddTeacher={handleOpenAddModal}
+                                meta={meta || undefined}
+                                onPageChange={handlePageChange}
+                                searchValue={searchValue}
+                                onSearchChange={handleSearchChange}
+                            />
+                        )}
+                    </div>
                 </div>
             </div>
-
-            {/* Loading State */}
-            {isLoading && (
-                <TeacherTableSkeleton
-                    searchValue={searchValue}
-                    onSearchChange={handleSearchChange}
-                    onAddClick={handleOpenAddModal}
-                    meta={meta || undefined}
-                    onPageChange={handlePageChange}
-                />
-            )}
-
-            {/* Error State */}
-            {!isLoading && error && (
-                <ErrorState message={error} onRetry={refetch} />
-            )}
-
-            {/* Data Table */}
-            {!isLoading && !error && (
-                <div className="px-4 lg:px-6">
-                    <TeacherTable
-                        data={teachers}
-                        onViewDetail={handleViewDetail}
-                        onAddTeacher={handleOpenAddModal}
-                        meta={meta || undefined}
-                        onPageChange={handlePageChange}
-                        searchValue={searchValue}
-                        onSearchChange={handleSearchChange}
-                    />
-                </div>
-            )}
 
             {/* Modals */}
             <TeacherDetailModal

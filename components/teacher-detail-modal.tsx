@@ -225,20 +225,25 @@ export function TeacherDetailModal({
     return (
         <>
             <Dialog open={isOpen} onOpenChange={onClose}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle className="text-center">
-                            {isEditing ? "Edit Guru" : "Detail Guru"}
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+                    <DialogHeader className="p-6 pb-4 border-b">
+                        <DialogTitle>
+                            {isEditing ? "Edit Mentor" : "Detail Mentor"}
                         </DialogTitle>
+                        <DialogDescription>
+                            {isEditing
+                                ? "Perbarui informasi profil mentor di bawah ini."
+                                : "Lihat dan kelola informasi detail mentor."}
+                        </DialogDescription>
                     </DialogHeader>
 
-                    <div className="space-y-6">
+                    <div className="px-6 py-4">
                         {/* Profile and Information Layout */}
                         <div className="flex gap-6">
                             {/* Profile Photo - Left Side */}
                             <div className="flex-shrink-0">
                                 <div className="relative">
-                                    <Avatar className="h-20 w-20">
+                                    <Avatar className="h-24 w-24">
                                         <AvatarImage
                                             src={
                                                 isEditing
@@ -249,7 +254,7 @@ export function TeacherDetailModal({
                                                 isEditing ? editForm?.fullName : currentTeacher.fullName
                                             }
                                         />
-                                        <AvatarFallback className="text-lg">
+                                        <AvatarFallback className="text-xl">
                                             {(isEditing ? editForm?.fullName : currentTeacher.fullName)
                                                 ?.split(" ")
                                                 .slice(0, 2)
@@ -258,47 +263,62 @@ export function TeacherDetailModal({
                                                 .toUpperCase()}
                                         </AvatarFallback>
                                     </Avatar>
+                                    {!isEditing && (
+                                        <div className={`absolute -top-1 -right-1 rounded-full p-1 ${currentTeacher.status === "ACTIVE"
+                                                ? "bg-green-500"
+                                                : "bg-red-500"
+                                            }`}>
+                                            <div className="h-2 w-2 rounded-full bg-white" />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
                             {/* Personal Information - Right Side */}
                             <div className="flex-1">
-                                <div className="grid grid-cols-1 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="fullName">
-                                            Nama Lengkap{" "}
-                                            {isEditing && <span className="text-red-500">*</span>}
-                                        </Label>
-                                        {isEditing ? (
-                                            <>
-                                                <Input
-                                                    id="fullName"
-                                                    value={editForm?.fullName || ""}
-                                                    onChange={(e) =>
-                                                        handleInputChange("fullName", e.target.value)
-                                                    }
-                                                    required
-                                                    placeholder="Nama lengkap guru"
-                                                    className={errors.fullName ? "border-red-500" : ""}
-                                                />
-                                                {errors.fullName && (
-                                                    <div className="flex items-center gap-2 text-red-500 text-sm">
-                                                        <AlertCircle className="h-4 w-4" />
-                                                        <span>{errors.fullName}</span>
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="col-span-2">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="fullName" className="text-sm font-medium">
+                                                Nama Lengkap
+                                                {isEditing && <span className="text-destructive ml-1">*</span>}
+                                            </Label>
+                                            {isEditing ? (
+                                                <>
+                                                    <Input
+                                                        id="fullName"
+                                                        value={editForm?.fullName || ""}
+                                                        onChange={(e) =>
+                                                            handleInputChange("fullName", e.target.value)
+                                                        }
+                                                        required
+                                                        placeholder="Nama lengkap mentor"
+                                                        className={errors.fullName ? "border-destructive" : ""}
+                                                    />
+                                                    {errors.fullName && (
+                                                        <p className="text-sm text-destructive">
+                                                            {errors.fullName}
+                                                        </p>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-base font-medium">{currentTeacher.fullName}</span>
+                                                    <div className={`px-2 py-0.5 text-xs rounded-full ${currentTeacher.status === "ACTIVE"
+                                                            ? "bg-green-100 text-green-700"
+                                                            : "bg-red-100 text-red-700"
+                                                        }`}>
+                                                        {currentTeacher.status === "ACTIVE" ? "Active" : "Inactive"}
                                                     </div>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <p className="text-sm border rounded-md px-3 py-2 bg-muted">
-                                                {currentTeacher.fullName}
-                                            </p>
-                                        )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="username">
-                                            Username{" "}
-                                            {isEditing && <span className="text-red-500">*</span>}
+                                    <div>
+                                        <Label htmlFor="username" className="text-sm font-medium">
+                                            Username
+                                            {isEditing && <span className="text-destructive ml-1">*</span>}
                                         </Label>
                                         {isEditing ? (
                                             <>
@@ -310,25 +330,56 @@ export function TeacherDetailModal({
                                                     }
                                                     required
                                                     placeholder="username"
-                                                    className={errors.username ? "border-red-500" : ""}
+                                                    className={errors.username ? "border-destructive" : ""}
                                                 />
                                                 {errors.username && (
-                                                    <div className="flex items-center gap-2 text-red-500 text-sm">
-                                                        <AlertCircle className="h-4 w-4" />
-                                                        <span>{errors.username}</span>
-                                                    </div>
+                                                    <p className="text-sm text-destructive mt-1">
+                                                        {errors.username}
+                                                    </p>
                                                 )}
                                             </>
                                         ) : (
-                                            <p className="text-sm border rounded-md px-3 py-2 bg-muted">
-                                                {currentTeacher.username}
+                                            <p className="mt-1 text-sm">@{currentTeacher.username}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="status" className="text-sm font-medium">
+                                            Status
+                                            {isEditing && <span className="text-destructive ml-1">*</span>}
+                                        </Label>
+                                        {isEditing ? (
+                                            <>
+                                                <select
+                                                    id="status"
+                                                    value={editForm?.status || "ACTIVE"}
+                                                    onChange={(e) =>
+                                                        handleInputChange("status", e.target.value)
+                                                    }
+                                                    required
+                                                    className={`w-full h-10 px-3 py-2 rounded-md border ${errors.status ? "border-destructive" : "border-input"
+                                                        }`}
+                                                >
+                                                    <option value="ACTIVE">Active</option>
+                                                    <option value="INACTIVE">Inactive</option>
+                                                </select>
+                                                {errors.status && (
+                                                    <p className="text-sm text-destructive mt-1">
+                                                        {errors.status}
+                                                    </p>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <p className="mt-1 text-sm">
+                                                {currentTeacher.status === "ACTIVE" ? "Active" : "Inactive"}
                                             </p>
                                         )}
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email">
-                                            Email {isEditing && <span className="text-red-500">*</span>}
+                                    <div>
+                                        <Label htmlFor="email" className="text-sm font-medium">
+                                            Email
+                                            {isEditing && <span className="text-destructive ml-1">*</span>}
                                         </Label>
                                         {isEditing ? (
                                             <>
@@ -341,25 +392,23 @@ export function TeacherDetailModal({
                                                     }
                                                     required
                                                     placeholder="email@example.com"
-                                                    className={errors.email ? "border-red-500" : ""}
+                                                    className={errors.email ? "border-destructive" : ""}
                                                 />
                                                 {errors.email && (
-                                                    <div className="flex items-center gap-2 text-red-500 text-sm">
-                                                        <AlertCircle className="h-4 w-4" />
-                                                        <span>{errors.email}</span>
-                                                    </div>
+                                                    <p className="text-sm text-destructive mt-1">
+                                                        {errors.email}
+                                                    </p>
                                                 )}
                                             </>
                                         ) : (
-                                            <p className="text-sm border rounded-md px-3 py-2 bg-muted">
-                                                {currentTeacher.email}
-                                            </p>
+                                            <p className="mt-1 text-sm">{currentTeacher.email}</p>
                                         )}
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="telp">
-                                            Nomor Telepon {isEditing && <span className="text-red-500">*</span>}
+                                    <div>
+                                        <Label htmlFor="telp" className="text-sm font-medium">
+                                            Nomor Telepon
+                                            {isEditing && <span className="text-destructive ml-1">*</span>}
                                         </Label>
                                         {isEditing ? (
                                             <>
@@ -371,58 +420,23 @@ export function TeacherDetailModal({
                                                     }
                                                     required
                                                     placeholder="+62 812-3456-7890"
-                                                    className={errors.telp ? "border-red-500" : ""}
+                                                    className={errors.telp ? "border-destructive" : ""}
                                                 />
                                                 {errors.telp && (
-                                                    <div className="flex items-center gap-2 text-red-500 text-sm">
-                                                        <AlertCircle className="h-4 w-4" />
-                                                        <span>{errors.telp}</span>
-                                                    </div>
+                                                    <p className="text-sm text-destructive mt-1">
+                                                        {errors.telp}
+                                                    </p>
                                                 )}
                                             </>
                                         ) : (
-                                            <p className="text-sm border rounded-md px-3 py-2 bg-muted">
-                                                {currentTeacher.phoneNumber}
-                                            </p>
+                                            <p className="mt-1 text-sm">{currentTeacher.phoneNumber}</p>
                                         )}
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="status">
-                                            Status {isEditing && <span className="text-red-500">*</span>}
-                                        </Label>
-                                        {isEditing ? (
-                                            <>
-                                                <select
-                                                    id="status"
-                                                    value={editForm?.status || "ACTIVE"}
-                                                    onChange={(e) =>
-                                                        handleInputChange("status", e.target.value)
-                                                    }
-                                                    required
-                                                    className={`w-full px-3 py-2 border rounded-md ${errors.status ? "border-red-500" : "border-input"
-                                                        }`}
-                                                >
-                                                    <option value="ACTIVE">Active</option>
-                                                    <option value="INACTIVE">Inactive</option>
-                                                </select>
-                                                {errors.status && (
-                                                    <div className="flex items-center gap-2 text-red-500 text-sm">
-                                                        <AlertCircle className="h-4 w-4" />
-                                                        <span>{errors.status}</span>
-                                                    </div>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <p className="text-sm border rounded-md px-3 py-2 bg-muted">
-                                                {currentTeacher.status}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="specialization">
-                                            Keahlian {isEditing && <span className="text-red-500">*</span>}
+                                    <div className="col-span-2">
+                                        <Label htmlFor="specialization" className="text-sm font-medium">
+                                            Keahlian
+                                            {isEditing && <span className="text-destructive ml-1">*</span>}
                                         </Label>
                                         {isEditing ? (
                                             <>
@@ -434,25 +448,32 @@ export function TeacherDetailModal({
                                                     }
                                                     required
                                                     placeholder="Essay Writing, Academic Writing, Research"
-                                                    className={errors.specialization ? "border-red-500" : ""}
+                                                    className={errors.specialization ? "border-destructive" : ""}
                                                 />
                                                 {errors.specialization && (
-                                                    <div className="flex items-center gap-2 text-red-500 text-sm">
-                                                        <AlertCircle className="h-4 w-4" />
-                                                        <span>{errors.specialization}</span>
-                                                    </div>
+                                                    <p className="text-sm text-destructive mt-1">
+                                                        {errors.specialization}
+                                                    </p>
                                                 )}
                                             </>
                                         ) : (
-                                            <p className="text-sm border rounded-md px-3 py-2 bg-muted">
-                                                {currentTeacher.specialization}
-                                            </p>
+                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                {currentTeacher.specialization.split(',').map((skill, index) => (
+                                                    <span
+                                                        key={index}
+                                                        className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700"
+                                                    >
+                                                        {skill.trim()}
+                                                    </span>
+                                                ))}
+                                            </div>
                                         )}
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="bio">
-                                            Bio {isEditing && <span className="text-red-500">*</span>}
+                                    <div className="col-span-2">
+                                        <Label htmlFor="bio" className="text-sm font-medium">
+                                            Bio
+                                            {isEditing && <span className="text-destructive ml-1">*</span>}
                                         </Label>
                                         {isEditing ? (
                                             <>
@@ -464,18 +485,17 @@ export function TeacherDetailModal({
                                                     }
                                                     required
                                                     placeholder="Deskripsi singkat tentang mentor..."
-                                                    className={`w-full px-3 py-2 border rounded-md min-h-[100px] ${errors.bio ? "border-red-500" : "border-input"
+                                                    className={`w-full px-3 py-2 border rounded-md min-h-[100px] ${errors.bio ? "border-destructive" : "border-input"
                                                         }`}
                                                 />
                                                 {errors.bio && (
-                                                    <div className="flex items-center gap-2 text-red-500 text-sm">
-                                                        <AlertCircle className="h-4 w-4" />
-                                                        <span>{errors.bio}</span>
-                                                    </div>
+                                                    <p className="text-sm text-destructive mt-1">
+                                                        {errors.bio}
+                                                    </p>
                                                 )}
                                             </>
                                         ) : (
-                                            <p className="text-sm border rounded-md px-3 py-2 bg-muted whitespace-pre-wrap">
+                                            <p className="mt-2 text-sm whitespace-pre-wrap">
                                                 {currentTeacher.bio}
                                             </p>
                                         )}
@@ -485,32 +505,14 @@ export function TeacherDetailModal({
                         </div>
                     </div>
 
-                    <DialogFooter className="flex gap-2">
-                        {isEditing ? (
-                            <>
-                                <Button
-                                    onClick={handleCancel}
-                                    variant="outline"
-                                    disabled={isSaving}
-                                >
-                                    <X className="h-4 w-4 mr-2" />
-                                    Batal
-                                </Button>
-                                <Button onClick={handleSave} disabled={isSaving}>
-                                    {isSaving ? (
-                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                    ) : (
-                                        <Save className="h-4 w-4 mr-2" />
-                                    )}
-                                    {isSaving ? "Menyimpan..." : "Simpan"}
-                                </Button>
-                            </>
-                        ) : (
-                            <>
+                    <DialogFooter className="flex items-center justify-between px-6 py-4 border-t">
+                        <div className="flex items-center gap-2">
+                            {!isEditing && (
                                 <Button
                                     variant="destructive"
                                     disabled={isDeleting}
                                     onClick={handleDelete}
+                                    size="sm"
                                 >
                                     {isDeleting ? (
                                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -519,12 +521,36 @@ export function TeacherDetailModal({
                                     )}
                                     {isDeleting ? "Menghapus..." : "Hapus"}
                                 </Button>
-                                <Button onClick={handleEdit} disabled={isDeleting}>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {isEditing ? (
+                                <>
+                                    <Button
+                                        onClick={handleCancel}
+                                        variant="outline"
+                                        disabled={isSaving}
+                                        size="sm"
+                                    >
+                                        <X className="h-4 w-4 mr-2" />
+                                        Batal
+                                    </Button>
+                                    <Button onClick={handleSave} disabled={isSaving} size="sm">
+                                        {isSaving ? (
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        ) : (
+                                            <Save className="h-4 w-4 mr-2" />
+                                        )}
+                                        {isSaving ? "Menyimpan..." : "Simpan"}
+                                    </Button>
+                                </>
+                            ) : (
+                                <Button onClick={handleEdit} disabled={isDeleting} size="sm">
                                     <Edit className="h-4 w-4 mr-2" />
                                     Edit
                                 </Button>
-                            </>
-                        )}
+                            )}
+                        </div>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

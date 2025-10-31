@@ -35,35 +35,30 @@ import {
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: "Admin",
+    email: "admin@ambilprestasi.com",
+    avatar: "/avatars/admin.jpg",
   },
   navMain: [
     {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
-    },
-    {
-      title: "Teacher",
+      title: "Manajemen Mentor",
       url: "/teacher",
-      icon: IconListDetails,
-    },
-    {
-      title: "Course",
-      url: "/course",
-      icon: IconChartBar,
-    },
-    {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "#",
       icon: IconUsers,
+    },
+    {
+      title: "Laporan",
+      url: "/reports",
+      icon: IconReport,
+    },
+    {
+      title: "Kelola Konten",
+      url: "/content",
+      icon: IconFileDescription,
+    },
+    {
+      title: "Konfigurasi",
+      url: "/settings",
+      icon: IconSettings,
     },
   ],
   navClouds: [
@@ -160,9 +155,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Sekolah Alam</span>
+              <a href="/teacher">
+                <span className="text-xl font-bold text-primary">Ambil Prestasi</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -170,8 +164,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
