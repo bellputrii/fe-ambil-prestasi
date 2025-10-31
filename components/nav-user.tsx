@@ -7,6 +7,7 @@ import {
   IconNotification,
   IconUserCircle,
 } from "@tabler/icons-react"
+import { useRouter } from "next/navigation"
 
 import {
   Avatar,
@@ -98,8 +99,15 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <IconLogout />
+            <DropdownMenuItem onClick={() => {
+              // Remove token from localStorage
+              localStorage.removeItem("token")
+              // Remove any other auth-related items if they exist
+              localStorage.removeItem("user")
+              // Use window.location for a full page reload to clear all state
+              window.location.href = "/auth/login"
+            }}>
+              <IconLogout className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

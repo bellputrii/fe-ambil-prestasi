@@ -1,22 +1,13 @@
-import React from "react";
+import { TeacherManagementContent } from "@/components/teacher/teacher-management-content";
 
-const items = [
-    "Item 1",
-    "Item 2",
-    "Item 3",
-    "Item 4",
-    "Item 5",
-];
-
-export default function TestPage() {
+export default function TeacherPage() {
     return (
-        <main style={{ padding: "2rem" }}>
-            <h1>Daftar Item</h1>
-            <ul>
-                {items.map((item, idx) => (
-                    <li key={idx}>{item}</li>
-                ))}
-            </ul>
-        </main>
+        <div className="flex flex-1 flex-col">
+            <div className="@container/main flex flex-1 flex-col gap-2">
+                <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+                    <TeacherManagementContent />
+                </div>
+            </div>
+        </div>
     );
 }

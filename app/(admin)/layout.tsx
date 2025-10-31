@@ -4,12 +4,12 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import React from 'react';
 
 export default function DashboardLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-    return (
-        <SidebarProvider
+  return (
+    <SidebarProvider
       style={
         {
           "--sidebar-width": "calc(var(--spacing) * 72)",
@@ -23,5 +23,5 @@ export default function DashboardLayout({
         {children}
       </SidebarInset>
     </SidebarProvider>
-    );
+  );
 }

@@ -3,18 +3,14 @@ import { Poppins, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ActiveThemeProvider } from "@/components/active-theme";
+import { Toaster } from "@/components/ui/sonner";
 import { cookies } from "next/headers";
 import { cn } from "@/lib/utils";
 
-const META_THEME_COLORS = {
-  light: "#ffffff",
-  dark: "#09090b",
-}
-
 const fontSans = Poppins({
-  variable: "--font-sans",
+  variable: "--font-poppins",
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 const fontMono = Geist_Mono({
@@ -23,8 +19,8 @@ const fontMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ambil Prestasi",
-  description: "Platform kursus online untuk mengembangkan keterampilan dan meraih prestasi terbaikmu.",
+  title: "LMS Sekolah Alam",
+  description: "Sekolah Alam Learning Management System",
 };
 
 export default async function RootLayout({
@@ -32,31 +28,33 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-const cookieStore = await cookies();
-const activeThemeValues = cookieStore.get("activeTheme")?.value || "default";
-const isScaled = activeThemeValues.endsWith("-scaled");
+  const cookieStore = await cookies();
+  const activeThemeValues = cookieStore.get("activeTheme")?.value || "default";
+  const isScaled = activeThemeValues.endsWith("-scaled");
 
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-      className={cn(
-        "bg-background overscroll-none font-sans antialiased",
-        activeThemeValues ? `theme-${activeThemeValues}` : "",
-        isScaled ? "theme-scaled" : "",
-  )}
-        // className={`${fontSans.variable} ${fontMono.variable} antialiased`}
+        className={cn(
+          "bg-background overscroll-none font-sans antialiased",
+          fontSans.variable,
+          fontMono.variable,
+          activeThemeValues ? `theme-${activeThemeValues}` : "",
+          isScaled ? "theme-scaled" : ""
+        )}
       >
-                  <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-            enableColorScheme
-          >
-            <ActiveThemeProvider initialTheme={activeThemeValues}>
-              {children}
-            </ActiveThemeProvider>
-          </ThemeProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+          enableColorScheme
+        >
+          <ActiveThemeProvider initialTheme={activeThemeValues}>
+            {children}
+            <Toaster />
+          </ActiveThemeProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
