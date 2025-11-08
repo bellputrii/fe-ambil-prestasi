@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import LayoutNavbar from '@/components/public/LayoutNavbar'
-import { Star, Video, MessageSquare, Calendar, BookOpen, Users, Award, Clock, CheckCircle, ArrowRight, Play } from 'lucide-react'
+import { Star, Video, MessageSquare, Calendar, BookOpen, Users, Award, Clock, CheckCircle, Play } from 'lucide-react'
 import Footer from '@/components/public/Footer'
 
 export default function EMentoringPage() {

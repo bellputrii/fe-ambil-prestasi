@@ -7,7 +7,6 @@ import {
   IconNotification,
   IconUserCircle,
 } from "@tabler/icons-react"
-import { useRouter } from "next/navigation"
 
 import {
   Avatar,

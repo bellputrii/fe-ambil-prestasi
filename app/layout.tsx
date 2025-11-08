@@ -19,8 +19,8 @@ const fontMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LMS Sekolah Alam",
-  description: "Sekolah Alam Learning Management System",
+  title: "Ambil Prestasi",
+  description: "Ambil Prestasi adalah platform manajemen pembelajaran daring untuk mentor dan siswa.",
 };
 
 export default async function RootLayout({

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, X, Home, BookOpen, Users, GraduationCap, ClipboardList, LogIn, UserPlus, User, LogOut } from "lucide-react";
+import { Menu, X, Home, BookOpen, Users, GraduationCap, ClipboardList, LogIn, UserPlus, User, LogOut, LayoutDashboard } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -15,6 +15,9 @@ export default function NavBar() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+
+  // Cek apakah sedang di halaman teacher
+  const isTeacherPage = pathname.includes('/beranda') || pathname.includes('/classes');
 
   // Effect untuk mendeteksi scroll
   useEffect(() => {
@@ -40,8 +43,6 @@ export default function NavBar() {
     const token = localStorage.getItem("token");
     if (token) {
       setIsLoggedIn(true);
-      // Jika perlu, bisa fetch data user di sini
-      // fetchUserData();
     } else {
       setIsLoggedIn(false);
     }
@@ -51,19 +52,18 @@ export default function NavBar() {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      // Hapus token dari localStorage
       localStorage.removeItem("token");
       localStorage.removeItem("rememberMe");
-      
-      // Reset state
       setIsLoggedIn(false);
       setUserData(null);
-      
-      // Tutup modal konfirmasi
       setShowLogoutConfirm(false);
       
-      // Redirect ke halaman home
-      router.push("/home");
+      // Redirect berdasarkan halaman saat ini
+      if (isTeacherPage) {
+        router.push("/beranda");
+      } else {
+        router.push("/home");
+      }
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
@@ -81,7 +81,8 @@ export default function NavBar() {
     setShowLogoutConfirm(false);
   };
 
-  const menuItems = [
+  // Menu items untuk public/student
+  const publicMenuItems = [
     { name: "Home", icon: <Home size={18} />, href: "/home" },
     { name: "E-Learning", icon: <BookOpen size={18} />, href: "/elearning" },
     { name: "Kisah Inspiratif", icon: <Users size={18} />, href: "/kisah-inspiratif" },
@@ -89,12 +90,29 @@ export default function NavBar() {
     { name: "Course Saya", icon: <ClipboardList size={18} />, href: "/mycourse" },
   ];
 
+  // Menu items untuk teacher
+  const teacherMenuItems = [
+    { name: "Beranda", icon: <Home size={18} />, href: "/beranda" },
+    { name: "Kelola Kelas", icon: <LayoutDashboard size={18} />, href: "/classes" },
+  ];
+
+  // Pilih menu berdasarkan halaman
+  const menuItems = isTeacherPage ? teacherMenuItems : publicMenuItems;
+
   // Fungsi untuk mengecek apakah link aktif
   const isActiveLink = (href: string) => {
     if (href === "/") {
       return pathname === "/";
     }
-    return pathname.startsWith(href);
+    return pathname === href || pathname.startsWith(href);
+  };
+
+  // Tentukan URL logo berdasarkan halaman
+  const getLogoHref = () => {
+    if (isTeacherPage) {
+      return "/beranda";
+    }
+    return "/home";
   };
 
   return (
@@ -104,7 +122,7 @@ export default function NavBar() {
           isScrolled 
             ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100 py-2" 
             : "bg-white shadow-sm border-b border-gray-200 py-3"
-        }`}
+        } ${isTeacherPage ? 'bg-blue-50 border-blue-200' : ''}`}
       >
         <div className="mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 max-w-7xl">
           {/* Logo */}
@@ -121,12 +139,15 @@ export default function NavBar() {
               />
             </div>
             <Link 
-              href="/home" 
+              href={getLogoHref()}
               className={`font-bold transition-all duration-300 ${
-                isScrolled ? "text-xl text-blue-800" : "text-xl text-blue-800"
-              }`}
+                isScrolled ? "text-xl" : "text-xl"
+              } ${isTeacherPage ? "text-blue-800" : "text-blue-800"}`}
             >
               Ambil Prestasi
+              {isTeacherPage && (
+                <span className="text-sm font-normal text-blue-600 ml-2"></span>
+              )}
             </Link>
           </div>
 
@@ -138,7 +159,11 @@ export default function NavBar() {
                 href={item.href}
                 className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200 ${
                   isActiveLink(item.href)
-                    ? "bg-blue-600 text-white shadow-md transform scale-105"
+                    ? isTeacherPage 
+                      ? "bg-blue-600 text-white shadow-md transform scale-105"
+                      : "bg-blue-600 text-white shadow-md transform scale-105"
+                    : isTeacherPage
+                    ? "text-blue-700 hover:text-blue-800 hover:bg-blue-100"
                     : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
                 } ${isScrolled ? "py-2" : "py-2.5"}`}
               >
@@ -160,17 +185,29 @@ export default function NavBar() {
                 {/* Profile Picture & Dropdown */}
                 <div className="relative group">
                   <button className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors">
-                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-medium ${
+                      isTeacherPage ? "bg-blue-700" : "bg-blue-600"
+                    }`}>
                       <User size={16} />
                     </div>
+                    {isTeacherPage && (
+                      <span className="text-sm font-medium text-blue-800 hidden sm:inline">
+                        Teacher
+                      </span>
+                    )}
                   </button>
                   
                   {/* Dropdown Menu */}
                   <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                     <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-900">User Profile</p>
-                      <p className="text-xs text-gray-500">user@example.com</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {isTeacherPage ? "Teacher Profile" : "User Profile"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {isTeacherPage ? "teacher@example.com" : "user@example.com"}
+                      </p>
                     </div>
+                    
                     <button
                       onClick={showLogoutConfirmation}
                       className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -193,19 +230,25 @@ export default function NavBar() {
             ) : (
               // Tampilan ketika user belum login
               <div className="hidden md:flex items-center gap-2">
+                {!isTeacherPage && (
+                  <Link
+                    href="/auth/login"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 hover:text-blue-800 hover:bg-blue-50 rounded-xl transition-all duration-200"
+                  >
+                    <LogIn size={16} />
+                    <span>Login</span>
+                  </Link>
+                )}
                 <Link
-                  href="/auth/login"
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 hover:text-blue-800 hover:bg-blue-50 rounded-xl transition-all duration-200"
-                >
-                  <LogIn size={16} />
-                  <span>Login</span>
-                </Link>
-                <Link
-                  href="/auth/login?tab=register"
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md transition-all duration-200"
+                  href={isTeacherPage ? "/auth/login?role=teacher" : "/auth/login?tab=register"}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl shadow-md transition-all duration-200 ${
+                    isTeacherPage
+                      ? "bg-blue-700 text-white hover:bg-blue-800"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                  }`}
                 >
                   <UserPlus size={16} />
-                  <span>Daftar</span>
+                  <span>{isTeacherPage ? "Teacher Login" : "Daftar"}</span>
                 </Link>
               </div>
             )}
@@ -222,7 +265,11 @@ export default function NavBar() {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg">
+          <div className={`md:hidden absolute top-full left-0 right-0 backdrop-blur-md border-t shadow-lg ${
+            isTeacherPage 
+              ? "bg-blue-50/95 border-blue-200" 
+              : "bg-white/95 border-gray-200"
+          }`}>
             <div className="px-4 py-3 space-y-1">
               {menuItems.map((item, index) => (
                 <Link
@@ -231,7 +278,11 @@ export default function NavBar() {
                   onClick={() => setIsOpen(false)}
                   className={`flex items-center gap-3 py-3 px-4 rounded-xl transition-all ${
                     isActiveLink(item.href)
-                      ? "bg-blue-600 text-white shadow-inner"
+                      ? isTeacherPage
+                        ? "bg-blue-600 text-white shadow-inner"
+                        : "bg-blue-600 text-white shadow-inner"
+                      : isTeacherPage
+                      ? "text-blue-700 hover:bg-blue-100 hover:text-blue-800"
                       : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
                   }`}
                 >
@@ -248,19 +299,53 @@ export default function NavBar() {
               ))}
               
               {/* Auth Buttons di Mobile */}
-              <div className="border-t border-gray-200 pt-3 mt-3 space-y-2">
+              <div className={`border-t pt-3 mt-3 space-y-2 ${
+                isTeacherPage ? "border-blue-200" : "border-gray-200"
+              }`}>
                 {isLoggedIn ? (
                   // Mobile menu ketika login
                   <>
-                    <div className="flex items-center gap-3 py-3 px-4 rounded-xl bg-blue-50 border border-blue-200">
-                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white">
+                    <div className={`flex items-center gap-3 py-3 px-4 rounded-xl border ${
+                      isTeacherPage 
+                        ? "bg-blue-100 border-blue-200" 
+                        : "bg-blue-50 border-blue-200"
+                    }`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white ${
+                        isTeacherPage ? "bg-blue-700" : "bg-blue-600"
+                      }`}>
                         <User size={16} />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">User Profile</p>
-                        <p className="text-xs text-gray-500">user@example.com</p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {isTeacherPage ? "Teacher Profile" : "User Profile"}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {isTeacherPage ? "teacher@example.com" : "user@example.com"}
+                        </p>
                       </div>
                     </div>
+                    
+                    {/* Switch Role Button */}
+                    {isTeacherPage ? (
+                      <Link
+                        href="/home"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 py-3 px-4 rounded-xl text-gray-700 hover:bg-gray-50 transition-all w-full text-left"
+                      >
+                        <User size={18} />
+                        <span className="font-medium">Switch to Student</span>
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/beranda"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 py-3 px-4 rounded-xl text-gray-700 hover:bg-gray-50 transition-all w-full text-left"
+                      >
+                        <LayoutDashboard size={18} />
+                        <span className="font-medium">Switch to Teacher</span>
+                      </Link>
+                    )}
+                    
                     <button
                       onClick={() => {
                         setIsOpen(false);
@@ -275,21 +360,27 @@ export default function NavBar() {
                 ) : (
                   // Mobile menu ketika belum login
                   <>
+                    {!isTeacherPage && (
+                      <Link
+                        href="/auth/login"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 py-3 px-4 rounded-xl text-blue-700 hover:bg-blue-50 transition-all"
+                      >
+                        <LogIn size={18} />
+                        <span className="font-medium">Login</span>
+                      </Link>
+                    )}
                     <Link
-                      href="/auth/login"
+                      href={isTeacherPage ? "/auth/login?role=teacher" : "/auth/login?tab=register"}
                       onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 py-3 px-4 rounded-xl text-blue-700 hover:bg-blue-50 transition-all"
-                    >
-                      <LogIn size={18} />
-                      <span className="font-medium">Login</span>
-                    </Link>
-                    <Link
-                      href="/auth/login?tab=register"
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 py-3 px-4 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all"
+                      className={`flex items-center gap-3 py-3 px-4 rounded-xl text-white hover:bg-blue-700 transition-all ${
+                        isTeacherPage ? "bg-blue-700" : "bg-blue-600"
+                      }`}
                     >
                       <UserPlus size={18} />
-                      <span className="font-medium">Daftar</span>
+                      <span className="font-medium">
+                        {isTeacherPage ? "Teacher Login" : "Daftar"}
+                      </span>
                     </Link>
                   </>
                 )}

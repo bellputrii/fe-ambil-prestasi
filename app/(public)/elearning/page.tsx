@@ -6,8 +6,30 @@ import LayoutNavbar from '@/components/public/LayoutNavbar'
 import { CheckCircle, Play, Users, Clock, BookOpen, Star, ArrowRight, Video, FileText, Award } from 'lucide-react'
 import Footer from '@/components/public/Footer'
 
+interface Course {
+  id: number
+  category: string
+  title: string
+  image: string
+  duration: string
+  participants: string
+  level: string
+  rating: number
+  instructor: string
+  featured?: boolean
+}
+
+interface ApiResponse {
+  success: boolean
+  data: any // Kita akan debug struktur sebenarnya
+  message?: string
+}
+
 export default function ELearningPage() {
   const [activeCategory, setActiveCategory] = useState('all')
+  const [courses, setCourses] = useState<Course[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const categories = [
     { id: 'all', name: 'Semua Kursus' },
@@ -17,7 +39,123 @@ export default function ELearningPage() {
     { id: 'design', name: 'Desain' }
   ]
 
-  const courses = [
+  // Fetch data courses dari API
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true)
+        const myHeaders = new Headers()
+        myHeaders.append("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZTQzMjM0NWEtMTllOS00MTZkLThiMjMtZDU5Njg0NWY0NjU0IiwiaWF0IjoxNzYxOTgwNDgwLCJleHAiOjE3NjIwNjY4ODB9.gmY2NmzF6hEXlMmuth8OIlKSl_eku6wOosaCozhp4nQ")
+
+        const requestOptions = {
+          method: "GET",
+          headers: myHeaders,
+          redirect: "follow" as RequestRedirect
+        }
+
+        console.log('Fetching courses from API...')
+        const response = await fetch("http://localhost:3001/api/v1/classes", requestOptions)
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const result: ApiResponse = await response.json()
+        console.log('API Response:', result) // Debug: lihat struktur response
+        
+        // Handle berbagai kemungkinan struktur response
+        let coursesData = []
+        
+        if (Array.isArray(result)) {
+          // Jika response langsung array
+          coursesData = result
+        } else if (result && Array.isArray(result.data)) {
+          // Jika response memiliki property data yang array
+          coursesData = result.data
+        } else if (result && result.data && typeof result.data === 'object') {
+          // Jika data adalah object, convert ke array
+          coursesData = Object.values(result.data)
+        } else {
+          // Fallback ke data statis
+          console.warn('Unexpected API response structure, using fallback data')
+          setCourses(getFallbackCourses())
+          setError('Struktur data tidak sesuai. Menampilkan data contoh.')
+          return
+        }
+
+        // Transform data dari API ke format yang diharapkan komponen
+        const transformedCourses = coursesData.map((item: any, index: number) => ({
+          id: item.id || item.class_id || index + 1,
+          category: mapCategory(item.category || item.type || getDefaultCategory(index)),
+          title: item.title || item.name || item.class_name || `Kursus ${index + 1}`,
+          image: item.image || item.image_url || getDefaultImage(index),
+          duration: item.duration || item.total_duration || `${Math.floor(Math.random() * 6) + 3} Jam`,
+          participants: item.participants?.toString() || item.enrolled_count?.toString() || (Math.floor(Math.random() * 400) + 100).toString(),
+          level: item.level || item.difficulty || ['Pemula', 'Menengah', 'Lanjutan'][index % 3],
+          rating: item.rating || item.average_rating || parseFloat((4.5 + Math.random() * 0.5).toFixed(1)),
+          instructor: item.instructor || item.teacher_name || item.creator || getDefaultInstructor(index),
+          featured: item.featured || index < 2
+        }))
+
+        console.log('Transformed courses:', transformedCourses) // Debug
+        setCourses(transformedCourses)
+        setError(null)
+      } catch (err) {
+        console.error('Error fetching courses:', err)
+        setError('Gagal memuat data kursus. Silakan coba lagi.')
+        // Fallback ke data statis jika API error
+        setCourses(getFallbackCourses())
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCourses()
+  }, [])
+
+  // Helper functions untuk transform data
+  const mapCategory = (category: string): string => {
+    if (!category) return 'essay'
+    
+    const categoryMap: { [key: string]: string } = {
+      'essay': 'essay',
+      'business': 'business',
+      'research': 'research',
+      'design': 'design',
+      'writing': 'essay',
+      'business-plan': 'business',
+      'startup': 'business',
+      'scientific': 'research',
+      'penelitian': 'research',
+      'desain': 'design'
+    }
+    return categoryMap[category.toLowerCase()] || 'essay'
+  }
+
+  const getDefaultCategory = (index: number): string => {
+    const categories = ['essay', 'business', 'research', 'design']
+    return categories[index % categories.length]
+  }
+
+  const getDefaultImage = (index: number): string => {
+    const images = ['/essay.png', '/business-plan.png', '/karya-tulis-ilmiah.png', '/poster.png']
+    return images[index % images.length]
+  }
+
+  const getDefaultInstructor = (index: number): string => {
+    const instructors = [
+      'Dr. Sarah Wijaya',
+      'Prof. Ahmad Rahman',
+      'Dr. Lisa Santoso',
+      'Maya Desain',
+      'Dr. Budi Prasetyo',
+      'Prof. Dian Sastro'
+    ]
+    return instructors[index % instructors.length]
+  }
+
+  // Fallback data jika API error
+  const getFallbackCourses = (): Course[] => [
     {
       id: 1,
       category: 'essay',
@@ -63,28 +201,6 @@ export default function ELearningPage() {
       level: 'Pemula',
       rating: 4.6,
       instructor: 'Maya Desain'
-    },
-    {
-      id: 5,
-      category: 'essay',
-      title: 'Advanced Essay Writing Techniques',
-      image: '/essay.png',
-      duration: '7 Jam',
-      participants: '190',
-      level: 'Lanjutan',
-      rating: 4.9,
-      instructor: 'Dr. Budi Prasetyo'
-    },
-    {
-      id: 6,
-      category: 'business',
-      title: 'Financial Modeling untuk Business Plan',
-      image: '/business-plan.png',
-      duration: '6 Jam',
-      participants: '225',
-      level: 'Menengah',
-      rating: 4.8,
-      instructor: 'Prof. Dian Sastro'
     }
   ]
 
@@ -95,7 +211,7 @@ export default function ELearningPage() {
   const stats = [
     { value: '180+', label: 'Video Pembelajaran', icon: <Video className="w-5 h-5 sm:w-7 sm:h-7" /> },
     { value: '90+', label: 'Modul Belajar', icon: <FileText className="w-5 h-5 sm:w-6 sm:h-6" /> },
-    { value: '6500+', label: 'Peserta Aktif', icon: <Users className="w-5 h-5 sm:w-6 sm:h-6" /> },
+    { value: `${courses.reduce((acc, course) => acc + parseInt(course.participants), 0)}+`, label: 'Peserta Aktif', icon: <Users className="w-5 h-5 sm:w-6 sm:h-6" /> },
     { value: '300+', label: 'Pemenang Kompetisi', icon: <Award className="w-5 h-5 sm:w-6 sm:h-6" /> },
   ]
 
@@ -156,7 +272,10 @@ export default function ELearningPage() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 pt-2 md:pt-4">
-                  <button className="bg-white text-blue-700 px-6 py-3 md:px-8 md:py-4 rounded-lg md:rounded-xl font-semibold transition-all duration-300 hover:scale-105 active:scale-95 shadow-md hover:shadow-lg flex items-center gap-2 justify-center">
+                  <button 
+                    onClick={() => document.getElementById('courses-section')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="bg-white text-blue-700 px-6 py-3 md:px-8 md:py-4 rounded-lg md:rounded-xl font-semibold transition-all duration-300 hover:scale-105 active:scale-95 shadow-md hover:shadow-lg flex items-center gap-2 justify-center"
+                  >
                     Jelajahi Kursus
                     <ArrowRight className="w-4 h-4" />
                   </button>
@@ -214,7 +333,7 @@ export default function ELearningPage() {
           </section>
 
           {/* Kategori Kursus */}
-          <section className="w-full max-w-7xl mx-auto">
+          <section id="courses-section" className="w-full max-w-7xl mx-auto">
             <div className="text-center mb-6 md:mb-8">
               <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 md:mb-4">
                 Kategori Kursus
@@ -240,79 +359,112 @@ export default function ELearningPage() {
               ))}
             </div>
 
+            {/* Loading State */}
+            {loading && (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <span className="ml-3 text-gray-600">Memuat kursus...</span>
+              </div>
+            )}
+
+            {/* Error State */}
+            {error && !loading && (
+              <div className="text-center py-8">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-md mx-auto">
+                  <p className="text-yellow-700 font-medium">{error}</p>
+                </div>
+              </div>
+            )}
+
             {/* Kursus Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-              {filteredCourses.map((course) => (
-                <div
-                  key={course.id}
-                  className="bg-white rounded-lg md:rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 group hover:scale-105 cursor-pointer"
-                >
-                  <div className="relative h-40 sm:h-44 md:h-48 overflow-hidden">
-                    <Image
-                      src={course.image}
-                      alt={course.title}
-                      fill
-                      className="object-cover transition-all duration-500 group-hover:scale-110"
-                    />
-                    {course.featured && (
-                      <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                        Featured
+            {!loading && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
+                {filteredCourses.map((course) => (
+                  <div
+                    key={course.id}
+                    className="bg-white rounded-lg md:rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 group hover:scale-105 cursor-pointer"
+                  >
+                    <div className="relative h-40 sm:h-44 md:h-48 overflow-hidden">
+                      <Image
+                        src={course.image}
+                        alt={course.title}
+                        width={400}
+                        height={200}
+                        className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110"
+                      />
+                      {course.featured && (
+                        <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                          Featured
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <button className="bg-white text-blue-600 p-2 md:p-3 rounded-full hover:bg-blue-50 transition-colors">
+                          <Play className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" />
+                        </button>
                       </div>
-                    )}
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <button className="bg-white text-blue-600 p-2 md:p-3 rounded-full hover:bg-blue-50 transition-colors">
-                        <Play className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" />
+                    </div>
+                    
+                    <div className="p-4 md:p-6 space-y-3 md:space-y-4">
+                      <div className="flex justify-between items-start">
+                        <span className="text-xs md:text-sm text-blue-700 font-semibold bg-blue-100 px-2 py-1 md:px-3 md:py-1 rounded-full">
+                          {course.category.charAt(0).toUpperCase() + course.category.slice(1)}
+                        </span>
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                          course.level === 'Pemula' ? 'bg-green-100 text-green-700' :
+                          course.level === 'Menengah' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {course.level}
+                        </span>
+                      </div>
+
+                      <h3 className="text-base md:text-lg font-bold text-gray-800 leading-tight group-hover:text-blue-700 transition-colors">
+                        {course.title}
+                      </h3>
+
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <span className="font-medium text-xs md:text-sm">{course.instructor}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs md:text-sm text-gray-600">
+                        <div className="flex items-center gap-3 md:gap-4">
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 md:w-4 md:h-4" />
+                            <span>{course.duration}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Users className="w-3 h-3 md:w-4 md:h-4" />
+                            <span>{course.participants}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Star className="w-3 h-3 md:w-4 md:h-4 text-yellow-400 fill-current" />
+                          <span className="font-semibold">{course.rating}</span>
+                        </div>
+                      </div>
+
+                      <button className="w-full bg-blue-600 text-white py-2 md:py-3 rounded-lg md:rounded-xl font-semibold transition-all duration-300 hover:bg-blue-700 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-sm md:text-base">
+                        Mulai Belajar
+                        <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
                       </button>
                     </div>
                   </div>
-                  
-                  <div className="p-4 md:p-6 space-y-3 md:space-y-4">
-                    <div className="flex justify-between items-start">
-                      <span className="text-xs md:text-sm text-blue-700 font-semibold bg-blue-100 px-2 py-1 md:px-3 md:py-1 rounded-full">
-                        {course.category.charAt(0).toUpperCase() + course.category.slice(1)}
-                      </span>
-                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                        course.level === 'Pemula' ? 'bg-green-100 text-green-700' :
-                        course.level === 'Menengah' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                        {course.level}
-                      </span>
-                    </div>
+                ))}
+              </div>
+            )}
 
-                    <h3 className="text-base md:text-lg font-bold text-gray-800 leading-tight group-hover:text-blue-700 transition-colors">
-                      {course.title}
-                    </h3>
-
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <span className="font-medium text-xs md:text-sm">{course.instructor}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs md:text-sm text-gray-600">
-                      <div className="flex items-center gap-3 md:gap-4">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 md:w-4 md:h-4" />
-                          <span>{course.duration}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Users className="w-3 h-3 md:w-4 md:h-4" />
-                          <span>{course.participants}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 md:w-4 md:h-4 text-yellow-400 fill-current" />
-                        <span className="font-semibold">{course.rating}</span>
-                      </div>
-                    </div>
-
-                    <button className="w-full bg-blue-600 text-white py-2 md:py-3 rounded-lg md:rounded-xl font-semibold transition-all duration-300 hover:bg-blue-700 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-sm md:text-base">
-                      Mulai Belajar
-                      <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
-                    </button>
-                  </div>
+            {/* Empty State */}
+            {!loading && !error && filteredCourses.length === 0 && (
+              <div className="text-center py-12">
+                <div className="bg-gray-50 rounded-lg p-8 max-w-md mx-auto">
+                  <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Tidak ada kursus ditemukan</h3>
+                  <p className="text-gray-500 text-sm">
+                    Tidak ada kursus yang tersedia untuk kategori ini.
+                  </p>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </section>
 
           {/* Alur Pembelajaran */}
@@ -369,7 +521,7 @@ export default function ELearningPage() {
           </section>
         </div>
       </LayoutNavbar>
-    <Footer/>
+      <Footer/>
     </>
   )
 }

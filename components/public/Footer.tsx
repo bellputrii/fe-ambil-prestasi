@@ -10,17 +10,30 @@ import {
   MapPin, 
   Instagram,
   Music,
-  ArrowRight
+  ArrowRight,
+  Home,
+  Settings
 } from 'lucide-react'
 
-export default function Footer() {
+interface FooterProps {
+  role?: 'student' | 'teacher'
+}
+
+export default function Footer({ role = 'student' }: FooterProps) {
   const currentYear = new Date().getFullYear()
 
-  const quickLinks = [
+  // Links untuk Student
+  const studentQuickLinks = [
     { name: 'E-Learning', href: '/elearning', icon: <BookOpen className="w-4 h-4" /> },
     { name: 'Kisah Inspiratif', href: '/kisah-inspiratif', icon: <Users className="w-4 h-4" /> },
     { name: 'E-Mentoring', href: '/ementoring', icon: <GraduationCap className="w-4 h-4" /> },
     { name: 'Course Saya', href: '/mycourse', icon: <BookOpen className="w-4 h-4" /> },
+  ]
+
+  // Links untuk Teacher
+  const teacherQuickLinks = [
+    { name: 'Home', href: '/teacher', icon: <Home className="w-4 h-4" /> },
+    { name: 'Kelola Kelas', href: '/teacher/kelola-kelas', icon: <Settings className="w-4 h-4" /> },
   ]
 
   const supportLinks = [
@@ -43,6 +56,9 @@ export default function Footer() {
     },
   ]
 
+  const quickLinks = role === 'teacher' ? teacherQuickLinks : studentQuickLinks
+  const menuTitle = role === 'teacher' ? 'Menu Teacher' : 'Menu Utama'
+
   return (
     <footer className="bg-blue-800 text-white">
       {/* Main Footer Content */}
@@ -58,9 +74,10 @@ export default function Footer() {
               <h3 className="text-lg sm:text-xl font-bold">Ambil Prestasi</h3>
             </div>
             <p className="text-blue-100 leading-relaxed mb-4 sm:mb-6 text-sm sm:text-base">
-              Platform belajar online terpadu untuk membantu mahasiswa 
-              meraih prestasi terbaik mereka melalui e-learning, mentoring, 
-              dan komunitas inspiratif.
+              {role === 'teacher' 
+                ? 'Platform mengajar online terpadu untuk membantu educator membuat dan mengelola kelas dengan efektif.'
+                : 'Platform belajar online terpadu untuk membantu mahasiswa meraih prestasi terbaik mereka melalui e-learning, mentoring, dan komunitas inspiratif.'
+              }
             </p>
             <div className="flex gap-3 sm:gap-4">
               {socialLinks.map((social, index) => (
@@ -80,7 +97,7 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-base sm:text-lg font-semibold mb-4 sm:mb-6 text-white">Menu Utama</h4>
+            <h4 className="text-base sm:text-lg font-semibold mb-4 sm:mb-6 text-white">{menuTitle}</h4>
             <ul className="space-y-2 sm:space-y-3">
               {quickLinks.map((link, index) => (
                 <li key={index}>
@@ -144,7 +161,9 @@ export default function Footer() {
 
             {/* Newsletter Subscription */}
             <div className="mt-4 sm:mt-6">
-              <h5 className="font-semibold mb-2 sm:mb-3 text-white text-sm sm:text-base">Berlangganan Newsletter</h5>
+              <h5 className="font-semibold mb-2 sm:mb-3 text-white text-sm sm:text-base">
+                {role === 'teacher' ? 'Update Terbaru' : 'Berlangganan Newsletter'}
+              </h5>
               <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="email"

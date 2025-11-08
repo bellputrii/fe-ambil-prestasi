@@ -1,14 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link' // Tambahkan import Link di sini
 import Image from 'next/image'
 import LayoutNavbar from '@/components/public/LayoutNavbar'
-import { ChevronLeft, ChevronRight, Play, Users, Trophy, BookOpen, Star, Clock, Award, ArrowRight, Video, FileText } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Play, Users, Trophy, BookOpen, Award, ArrowRight, Video, FileText } from 'lucide-react'
 import Footer from '@/components/public/Footer'
 
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
+  const [filteredCourses, setFilteredCourses] = useState<Course[]>([])
 
   useEffect(() => {
     setIsVisible(true)
@@ -337,6 +339,52 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Course Section - Daftar Course (E-Learning) */}
+          <section className="w-full max-w-7xl mx-auto">
+            <div className="text-center mb-6 md:mb-8">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 md:mb-4">
+                Daftar Course E-Learning
+              </h2>
+              <p className="text-gray-700 max-w-2xl mx-auto text-sm sm:text-base">
+                Temukan berbagai course menarik untuk mengembangkan diri dan keterampilanmu
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredCourses.map((course) => (
+                <Link href={`/elearning/${course.id}`} key={course.id}> {/* Ganti div card dengan Link */}
+                  <div className="bg-white rounded-lg md:rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 group hover:scale-105 cursor-pointer">
+                    <div className="relative h-40 sm:h-44 md:h-48 overflow-hidden">
+                      <Image
+                        src={course.image}
+                        alt={course.title}
+                        width={400}
+                        height={200}
+                        className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110"
+                      />
+                      {course.featured && (
+                        <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                          Featured
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <button className="bg-white text-blue-600 p-2 md:p-3 rounded-full hover:bg-blue-50 transition-colors">
+                          <Play className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 md:p-6 space-y-3 md:space-y-4">
+                      {/* Konten card lainnya tetap sama */}
+                      <h3 className="text-lg font-semibold">{course.title}</h3>
+                      <p className="text-gray-600">{course.description}</p>
+                    </div>
+                  </div>
+                </Link>
               ))}
             </div>
           </section>
