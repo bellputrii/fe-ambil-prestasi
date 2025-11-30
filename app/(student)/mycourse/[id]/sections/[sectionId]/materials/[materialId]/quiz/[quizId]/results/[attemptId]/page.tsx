@@ -560,7 +560,7 @@ export default function QuizResultsPage() {
           
           {!isPassed && (
             <button
-              onClick={() => router.push(`/mycourse/${classId}/sections/${sectionId}/materials/${materialId}/quiz/${quizId}/attempt`)}
+              onClick={() => router.push(`/mycourse/${classId}/sections/${sectionId}/materials/${materialId}/quiz/${quizId}`)}
               className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />

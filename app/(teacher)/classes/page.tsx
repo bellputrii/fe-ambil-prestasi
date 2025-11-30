@@ -27,23 +27,21 @@ interface Category {
 
 interface ApiResponse {
   success: boolean
-  data: {
-    classes: Array<{
-      id: number
-      name: string
-      description: string
-      image_path: string
-      categoryId: number
-      image_path_relative: string
-    }>
-    meta: {
-      totalItems: number
-      itemsPerPage: number
-      totalPages: number
-      currentPage: number
-    }
-  }
   message?: string
+  data: Array<{
+    id: number
+    name: string
+    description: string
+    image_path: string
+    categoryId: number
+    image_path_relative: string
+  }>
+  meta: {
+    totalItems: number
+    itemsPerPage: number
+    totalPages: number
+    currentPage: number
+  }
 }
 
 // Helper function to get valid image URL
@@ -157,7 +155,7 @@ export default function TeacherHome() {
     }
   }, [filteredClasses, showMore])
 
-  // Fetch classes from API
+  // Fetch classes from API - SESUAI STRUKTUR BARU
   const fetchClasses = async () => {
     try {
       setLoading(true)
@@ -170,7 +168,7 @@ export default function TeacherHome() {
         return
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/classes`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/classes`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -190,8 +188,9 @@ export default function TeacherHome() {
       
       const result: ApiResponse = await response.json()
       
-      if (result.success && result.data.classes) {
-        const transformedClasses = result.data.classes.map((classItem) => ({
+      if (result.success && result.data) {
+        // PERUBAHAN: result.data langsung array, bukan result.data.classes
+        const transformedClasses = result.data.map((classItem) => ({
           id: classItem.id,
           name: classItem.name,
           description: classItem.description,
@@ -825,7 +824,7 @@ export default function TeacherHome() {
       </LayoutNavbar>
       <Footer/>
 
-      {/* Create/Edit Class Modal - DENGAN PENDEKATAN SEPERTI LARAVEL */}
+      {/* Create/Edit Class Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-gray-200 shadow-2xl">
@@ -848,7 +847,7 @@ export default function TeacherHome() {
             <div className="flex-1 overflow-y-auto">
               <form onSubmit={handleSubmit} className="p-6">
                 <div className="space-y-6">
-                  {/* Image Upload Section - SEPERTI DI LARAVEL */}
+                  {/* Image Upload Section */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                       Gambar Kelas

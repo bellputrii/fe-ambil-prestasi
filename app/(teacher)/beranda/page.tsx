@@ -26,23 +26,21 @@ interface Category {
 
 interface ApiResponse {
   success: boolean
-  data: {
-    classes: Array<{
-      id: number
-      name: string
-      description: string
-      image_path: string
-      categoryId: number
-      image_path_relative: string
-    }>
-    meta: {
-      totalItems: number
-      itemsPerPage: number
-      totalPages: number
-      currentPage: number
-    }
-  }
   message?: string
+  data: Array<{
+    id: number
+    name: string
+    description: string
+    image_path: string
+    categoryId: number
+    image_path_relative: string
+  }>
+  meta: {
+    totalItems: number
+    itemsPerPage: number
+    totalPages: number
+    currentPage: number
+  }
 }
 
 // Helper function to get valid image URL
@@ -89,7 +87,7 @@ export default function TeacherDashboard() {
     return categoryMap[categoryId] || 'Kursus'
   }
 
-  // Fetch classes from API dengan struktur yang sama seperti di e-learning
+  // Fetch classes from API dengan struktur yang sesuai
   const fetchClasses = async () => {
     try {
       setLoading(true)
@@ -103,7 +101,7 @@ export default function TeacherDashboard() {
         return
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/classes`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/classes`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -124,17 +122,17 @@ export default function TeacherDashboard() {
       
       const result: ApiResponse = await response.json()
       
-      if (result.success && result.data.classes) {
+      if (result.success && result.data) {
         // Transform data dari API ke format yang diharapkan komponen
-        const transformedClasses = result.data.classes.map((classItem) => ({
+        const transformedClasses = result.data.map((classItem) => ({
           id: classItem.id,
           name: classItem.name,
           description: classItem.description,
           image_path: classItem.image_path,
           image_path_relative: classItem.image_path_relative,
           categoryId: classItem.categoryId,
-          studentCount: Math.floor(Math.random() * 30) + 10,
-          materialCount: Math.floor(Math.random() * 15) + 5,
+          studentCount: Math.floor(Math.random() * 30) + 10, // Data dummy untuk demo
+          materialCount: Math.floor(Math.random() * 15) + 5, // Data dummy untuk demo
           createdAt: new Date().toISOString()
         }))
 
@@ -215,7 +213,7 @@ export default function TeacherDashboard() {
       <LayoutNavbar>
         <div className={`flex flex-col gap-8 md:gap-12 px-4 sm:px-6 lg:px-8 pt-16 md:pt-20 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           
-          {/* Header Section (Hero removed for consistency) */}
+          {/* Header Section */}
           <section className="w-full max-w-7xl mx-auto">
             <div className="text-center mb-4 md:mb-8">
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">

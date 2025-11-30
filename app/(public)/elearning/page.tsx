@@ -23,8 +23,14 @@ interface Course {
   totalReviews: number
 }
 
-interface ApiResponse {
+interface Category {
+  id: number
+  name: string
+}
+
+interface ClassesApiResponse {
   success: boolean
+  message: string
   data: {
     classes: Array<{
       id: number
@@ -43,27 +49,27 @@ interface ApiResponse {
       currentPage: number
     }
   }
-  message?: string
+}
+
+interface CategoriesApiResponse {
+  success: boolean
+  message: string
+  data: Category[]
 }
 
 export default function ELearningPage() {
   const router = useRouter()
   const [activeCategory, setActiveCategory] = useState('all')
   const [courses, setCourses] = useState<Course[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [categoriesLoading, setCategoriesLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [categoriesError, setCategoriesError] = useState<string | null>(null)
   const [showAllCourses, setShowAllCourses] = useState(false)
 
-  const categories = [
-    { id: 'all', name: 'Semua Kursus' },
-    { id: 'essay', name: 'Essay' },
-    { id: 'business', name: 'Business Plan' },
-    { id: 'research', name: 'Penelitian' },
-    { id: 'design', name: 'Desain' }
-  ]
-
   // Data untuk paket berlangganan
-    const plans = [
+  const plans = [
     {
       name: "Paket 1 Bulan",
       originalPrice: "Rp 50.000",
@@ -163,42 +169,115 @@ export default function ELearningPage() {
     setShowAllCourses(true)
   }
 
-  // Fetch data courses dari API publik
+  // Fetch data categories dari API publik
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchCategories = async () => {
       try {
-        setLoading(true)
+        setCategoriesLoading(true)
+        setCategoriesError(null)
+
+        console.log('Fetching categories from API...')
         
-        const response = await fetch(`https://api.damarjatiam.my.id/api/v1/public/classes`, {
+        const response = await fetch(`https://api.ambilprestasi.my.id/api/v1/public/categories`, {
           method: "GET",
           headers: {
-            "Content-Type": "application/json",
-          }
+            'Content-Type': 'application/json',
+          },
         })
 
+        console.log('Categories response status:', response.status)
+        
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
         
-        const result: ApiResponse = await response.json()
+        const result: CategoriesApiResponse = await response.json()
+        console.log('Categories API Response:', result)
         
-        if (result.success && result.data.classes) {
-          const transformedCourses = result.data.classes.map((classItem, index) => ({
-            id: classItem.id,
-            category: mapCategory(classItem.categoryId),
-            title: classItem.name,
-            image: classItem.image_path_relative || '/home.jpg',
-            duration: `${Math.floor(Math.random() * 6) + 3} Jam`,
-            participants: (Math.floor(Math.random() * 400) + 100).toString(),
-            level: ['Pemula', 'Menengah', 'Lanjutan'][index % 3],
-            rating: classItem.averageRating > 0 ? classItem.averageRating : parseFloat((4.5 + Math.random() * 0.5).toFixed(1)),
-            instructor: getDefaultInstructor(index),
-            description: classItem.description,
-            averageRating: classItem.averageRating,
-            totalReviews: classItem.totalReviews,
-            featured: index < 2
-          }))
+        if (result.success && result.data && Array.isArray(result.data)) {
+          console.log('Categories data:', result.data)
+          setCategories(result.data)
+        } else {
+          console.warn('Categories API response structure unexpected:', result)
+          throw new Error(result.message || 'Struktur data kategori tidak sesuai')
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err)
+        setCategoriesError('Gagal memuat data kategori. Menggunakan data default.')
+        // Fallback ke data sample jika API gagal
+        setCategories(getFallbackCategories())
+      } finally {
+        setCategoriesLoading(false)
+      }
+    }
 
+    fetchCategories()
+  }, [])
+
+  // Fetch data courses dari API publik - DIPERBAIKI
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        console.log('Fetching courses from API...')
+        
+        // Gunakan URL yang benar sesuai contoh API
+        const response = await fetch(`https://api.ambilprestasi.my.id/api/v1/public/classes`, {
+          method: "GET",
+          headers: {
+            'Content-Type': 'application/json',
+            // Tidak perlu Authorization untuk API publik
+          },
+        })
+
+        console.log('Courses response status:', response.status)
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const result: ClassesApiResponse = await response.json()
+        console.log('Courses API Response:', result)
+        
+        if (result.success && result.data && result.data.classes) {
+          console.log('Transforming courses data...')
+          
+          const transformedCourses = result.data.classes.map((classItem, index) => {
+            // Cari nama kategori berdasarkan categoryId dengan fallback yang lebih baik
+            const category = categories.find(cat => cat.id === classItem.categoryId)
+            let categoryName = 'essay' // default fallback
+            
+            if (category) {
+              // Mapping yang lebih spesifik berdasarkan nama kategori
+              categoryName = mapCategoryName(category.name)
+            } else {
+              // Fallback mapping berdasarkan categoryId
+              categoryName = mapCategoryById(classItem.categoryId)
+            }
+            
+            // Dapatkan instructor berdasarkan kategori atau nama course
+            const instructor = getInstructorByCategory(classItem.categoryId, classItem.name)
+            
+            return {
+              id: classItem.id,
+              category: categoryName,
+              title: classItem.name,
+              image: classItem.image_path_relative || '/home.jpg',
+              duration: getDurationByCategory(classItem.categoryId),
+              participants: getParticipantsCount(index),
+              level: 'Pemula', // Default level untuk semua course
+              rating: classItem.averageRating > 0 ? classItem.averageRating : 4.5,
+              instructor: instructor,
+              description: classItem.description || 'Kursus berkualitas tinggi untuk meningkatkan kemampuan dan prestasi Anda.',
+              averageRating: classItem.averageRating,
+              totalReviews: classItem.totalReviews,
+              featured: index === 0 // Hanya course pertama yang featured
+            }
+          })
+
+          console.log('Transformed courses:', transformedCourses)
           setCourses(transformedCourses)
           setError(null)
         } else {
@@ -207,17 +286,31 @@ export default function ELearningPage() {
       } catch (err) {
         console.error('Error fetching courses:', err)
         setError('Gagal memuat data kursus. Silakan coba lagi.')
+        // Fallback ke data sample jika API gagal
         setCourses(getFallbackCourses())
       } finally {
         setLoading(false)
       }
     }
 
-    fetchCourses()
-  }, [])
+    // Hanya fetch courses jika categories sudah selesai di-load
+    if (!categoriesLoading && categories.length > 0) {
+      fetchCourses()
+    }
+  }, [categoriesLoading, categories])
 
   // Helper functions untuk transform data
-  const mapCategory = (categoryId: number): string => {
+  const mapCategoryName = (categoryName: string): string => {
+    const categoryMap: { [key: string]: string } = {
+      'Essay': 'essay',
+      'Business Plan': 'business',
+      'Karya Tulis Ilmiah': 'research',
+      'Poster dan Infografis': 'design'
+    }
+    return categoryMap[categoryName] || 'essay'
+  }
+
+  const mapCategoryById = (categoryId: number): string => {
     const categoryMap: { [key: number]: string } = {
       1: 'essay',
       2: 'business',
@@ -227,19 +320,40 @@ export default function ELearningPage() {
     return categoryMap[categoryId] || 'essay'
   }
 
-  const getDefaultInstructor = (index: number): string => {
-    const instructors = [
-      'Dr. Sarah Wijaya',
-      'Prof. Ahmad Rahman',
-      'Dr. Lisa Santoso',
-      'Maya Desain',
-      'Dr. Budi Prasetyo',
-      'Prof. Dian Sastro'
-    ]
-    return instructors[index % instructors.length]
+  const getInstructorByCategory = (categoryId: number, courseName: string): string => {
+    const instructorMap: { [key: number]: string } = {
+      1: 'Dr. Sarah Wijaya',
+      2: 'Sa\'adah Fadhilah Indra Ayu',
+      3: 'Mohammad Pradana Setyawan',
+      4: 'Matthew Witjaksono Rahardjo'
+    }
+    return instructorMap[categoryId] || 'Mentor Ahli'
   }
 
-  // Fallback data jika API error
+  const getDurationByCategory = (categoryId: number): string => {
+    const durationMap: { [key: number]: string } = {
+      1: '4 Jam',
+      2: '5 Jam',
+      3: '6 Jam',
+      4: '4 Jam'
+    }
+    return durationMap[categoryId] || '4 Jam'
+  }
+
+  const getParticipantsCount = (index: number): string => {
+    const participants = [420, 310, 280, 355, 290, 320]
+    return participants[index % participants.length].toString()
+  }
+
+  // Fallback data categories jika API error
+  const getFallbackCategories = (): Category[] => [
+    { id: 1, name: 'Essay' },
+    { id: 2, name: 'Business Plan' },
+    { id: 3, name: 'Karya Tulis Ilmiah' },
+    { id: 4, name: 'Poster dan Infografis' }
+  ]
+
+  // Fallback data courses jika API error
   const getFallbackCourses = (): Course[] => [
     {
       id: 1,
@@ -284,49 +398,16 @@ export default function ELearningPage() {
       description: 'Teknik menulis karya ilmiah dan strategi publikasi yang efektif',
       averageRating: 4.7,
       totalReviews: 15
-    },
-    {
-      id: 4,
-      category: 'design',
-      title: 'Desain Poster Akademik yang Impactful',
-      image: '/poster.png',
-      duration: '4 Jam',
-      participants: '355',
-      level: 'Pemula',
-      rating: 4.6,
-      instructor: 'Maya Desain',
-      description: 'Belajar desain poster akademik yang menarik dan informatif',
-      averageRating: 4.6,
-      totalReviews: 22
-    },
-    {
-      id: 5,
-      category: 'essay',
-      title: 'Teknik Menulis Essay Beasiswa',
-      image: '/essay.png',
-      duration: '7 Jam',
-      participants: '290',
-      level: 'Menengah',
-      rating: 4.8,
-      instructor: 'Dr. Sarah Wijaya',
-      description: 'Rahasia menulis essay beasiswa yang memikat panitia seleksi',
-      averageRating: 4.8,
-      totalReviews: 30
-    },
-    {
-      id: 6,
-      category: 'business',
-      title: 'Analisis Pasar untuk Business Plan',
-      image: '/business-plan.png',
-      duration: '5 Jam',
-      participants: '320',
-      level: 'Lanjutan',
-      rating: 4.7,
-      instructor: 'Prof. Ahmad Rahman',
-      description: 'Teknik analisis pasar yang komprehensif untuk business plan',
-      averageRating: 4.7,
-      totalReviews: 12
     }
+  ]
+
+  // Siapkan data kategori untuk filter (termasuk "Semua")
+  const categoryFilters = [
+    { id: 'all', name: 'Semua Kursus' },
+    ...categories.map(cat => ({
+      id: mapCategoryName(cat.name),
+      name: cat.name
+    }))
   ]
 
   // Filter courses berdasarkan kategori dan batasi tampilan
@@ -473,8 +554,25 @@ export default function ELearningPage() {
               </p>
             </div>
 
+            {/* Loading State untuk Categories */}
+            {categoriesLoading && (
+              <div className="flex justify-center items-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-700"></div>
+                <span className="ml-2 text-gray-600 text-sm">Memuat kategori...</span>
+              </div>
+            )}
+
+            {/* Error State untuk Categories */}
+            {categoriesError && !categoriesLoading && (
+              <div className="text-center py-2">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 max-w-md mx-auto">
+                  <p className="text-yellow-700 font-medium text-sm">{categoriesError}</p>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-wrap justify-center gap-2 mb-8">
-              {categories.map((category) => (
+              {categoryFilters.map((category) => (
                 <button
                   key={category.id}
                   onClick={() => {
@@ -492,7 +590,7 @@ export default function ELearningPage() {
               ))}
             </div>
 
-            {/* Loading State */}
+            {/* Loading State untuk Courses */}
             {loading && (
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
@@ -500,11 +598,17 @@ export default function ELearningPage() {
               </div>
             )}
 
-            {/* Error State */}
+            {/* Error State untuk Courses */}
             {error && !loading && (
               <div className="text-center py-8">
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-md mx-auto">
                   <p className="text-yellow-700 font-medium">{error}</p>
+                  <button 
+                    onClick={() => window.location.reload()}
+                    className="mt-3 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    Coba Lagi
+                  </button>
                 </div>
               </div>
             )}
@@ -546,13 +650,13 @@ export default function ELearningPage() {
                           <span className="text-xs text-blue-700 font-semibold bg-blue-100 px-2 py-1 rounded-full">
                             {course.category.charAt(0).toUpperCase() + course.category.slice(1)}
                           </span>
-                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                          {/* <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                             course.level === 'Pemula' ? 'bg-green-100 text-green-700' :
                             course.level === 'Menengah' ? 'bg-yellow-100 text-yellow-700' :
                             'bg-red-100 text-red-700'
                           }`}>
                             {course.level}
-                          </span>
+                          </span> */}
                         </div>
 
                         <h3 className="text-base font-bold text-gray-800 leading-tight">
@@ -563,8 +667,19 @@ export default function ELearningPage() {
                           {course.description}
                         </p>
 
+                        {/* <div className="flex items-center justify-between text-xs text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            <span>{course.duration}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            <span>{course.participants}+ peserta</span>
+                          </div>
+                        </div> */}
+
                         <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <span className="font-medium text-xs">{course.instructor}</span>
+                          <span className="font-medium text-xs">Oleh: {course.instructor}</span>
                         </div>
 
                         <button 
@@ -622,7 +737,7 @@ export default function ELearningPage() {
                   <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Tidak ada kursus ditemukan</h3>
                   <p className="text-gray-500 text-sm">
-                    Tidak ada kursus yang tersedia untuk kategori ini.
+                    Tidak ada kursus yang tersedia untuk kategori {categories.find(c => mapCategoryName(c.name) === activeCategory)?.name || 'ini'}.
                   </p>
                 </div>
               </div>

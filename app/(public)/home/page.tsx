@@ -28,7 +28,7 @@ export default function HomePage() {
       ],
       buttonText: "Pilih Paket 1 Bulan",
       popular: false,
-      link: "https://link.id/ambilprestasi-1bulan"
+      link: "https://lynk.id/ambilprestasi"
     },
     {
       name: "Paket 4 Bulan",
@@ -48,7 +48,7 @@ export default function HomePage() {
       ],
       buttonText: "Pilih Paket 4 Bulan",
       popular: true,
-      link: "https://link.id/ambilprestasi-4bulan"
+      link: "https://lynk.id/ambilprestasi"
     },
     {
       name: "Paket 1 Tahun",
@@ -70,7 +70,7 @@ export default function HomePage() {
       ],
       buttonText: "Pilih Paket 1 Tahun",
       popular: false,
-      link: "https://link.id/ambilprestasi-1tahun"
+      link: "https://lynk.id/ambilprestasi"
     }
   ]
 

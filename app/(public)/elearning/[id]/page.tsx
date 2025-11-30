@@ -67,7 +67,7 @@ export default function ELearningClassDetailPage() {
     try {
       setLoading(true)
       
-      const response = await fetch(`https://api.damarjatiam.my.id/api/v1/public/classes/${classId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/classes/${classId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -246,9 +246,9 @@ export default function ELearningClassDetailPage() {
                     <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
                       {classDetail ? getCategoryName(classDetail.categoryId) : 'Kursus'}
                     </span>
-                    <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                    {/* <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
                       {classDetail ? getCourseLevel(classDetail.categoryId) : 'Level'}
-                    </span>
+                    </span> */}
                   </div>
 
                   <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">

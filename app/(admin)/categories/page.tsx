@@ -34,6 +34,7 @@ export default function CategoriesManagement() {
   // State untuk message feedback
   const [messageSuccess, setMessageSuccess] = useState<string | null>(null)
   const [messageFailed, setMessageFailed] = useState<string | null>(null)
+  const [messageWarning, setMessageWarning] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<{show: boolean, categoryId: number | null, categoryName: string}>({
     show: false,
     categoryId: null,
@@ -242,52 +243,86 @@ export default function CategoriesManagement() {
     }
   }
 
+
+
   // Delete category
-  const handleDeleteCategory = async (categoryId: number) => {
-    setLoading(true)
-    try {
-      const token = localStorage.getItem("token")
-      
-      if (!token) {
-        setMessageFailed('Token tidak ditemukan. Silakan login kembali.')
-        setLoading(false)
-        return
-      }
+  // Auto hide messages after 5 seconds
+useEffect(() => {
+  if (messageSuccess || messageFailed || messageWarning) {
+    const timer = setTimeout(() => {
+      setMessageSuccess(null)
+      setMessageFailed(null)
+      setMessageWarning(null)
+    }, 5000)
+    return () => clearTimeout(timer)
+  }
+}, [messageSuccess, messageFailed, messageWarning])
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${categoryId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        }
-      })
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem("token")
-          setMessageFailed('Sesi telah berakhir. Silakan login kembali.')
-          setTimeout(() => router.push('/auth/login'), 2000)
+
+    // Modifikasi fungsi handleDeleteCategory
+    const handleDeleteCategory = async (categoryId: number) => {
+      setLoading(true)
+      try {
+        const token = localStorage.getItem("token")
+        
+        if (!token) {
+          setMessageFailed('Token tidak ditemukan. Silakan login kembali.')
+          setLoading(false)
           return
         }
-        const errorData = await response.json().catch(() => null)
-        throw new Error(errorData?.message || `HTTP error! status: ${response.status}`)
-      }
 
-      const result = await response.json()
-      
-      if (result.success) {
-        await fetchCategories()
-        setMessageSuccess('Category berhasil dihapus')
-      } else {
-        throw new Error(result.message || 'Failed to delete category')
+        const urlencoded = new URLSearchParams()
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${categoryId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: urlencoded
+        })
+
+        const result = await response.json()
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem("token")
+            setMessageFailed('Sesi telah berakhir. Silakan login kembali.')
+            setTimeout(() => router.push('/auth/login'), 2000)
+            return
+          }
+          
+          // Handle case where category cannot be deleted due to existing classes
+          if (result.success === false && result.data && result.data.totalClasses > 0) {
+            const classNames = result.data.classes.map((cls: any) => cls.name).join(', ')
+            const classCount = result.data.totalClasses
+            const classText = classCount === 1 ? 'kelas' : 'kelas-kelas'
+            
+            setMessageWarning(
+              `Tidak dapat menghapus category "${showDeleteConfirm.categoryName}". Category ini sedang digunakan oleh ${classCount} ${classText}: ${classNames}. Harap hapus atau pindahkan ${classCount === 1 ? 'kelas tersebut' : 'kelas-kelas tersebut'} terlebih dahulu.`
+            )
+            setShowDeleteConfirm({ show: false, categoryId: null, categoryName: '' })
+            setLoading(false)
+            return
+          }
+          
+          throw new Error(result.message || `HTTP error! status: ${response.status}`)
+        }
+
+        if (result.success) {
+          await fetchCategories()
+          setMessageSuccess('Category berhasil dihapus')
+        } else {
+          throw new Error(result.message || 'Failed to delete category')
+        }
+      } catch (error) {
+        console.error('Error deleting category:', error)
+        setMessageFailed(`Gagal menghapus category: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      } finally {
+        setLoading(false)
+        setShowDeleteConfirm({ show: false, categoryId: null, categoryName: '' })
       }
-    } catch (error) {
-      console.error('Error deleting category:', error)
-      setMessageFailed(`Gagal menghapus category: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    } finally {
-      setLoading(false)
-      setShowDeleteConfirm({ show: false, categoryId: null, categoryName: '' })
     }
-  }
 
   // Open delete confirmation
   const openDeleteConfirm = (categoryId: number, categoryName: string) => {
@@ -577,6 +612,26 @@ export default function CategoriesManagement() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Warning Message */}
+      {messageWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-yellow-500 border border-yellow-700 rounded-lg p-4 shadow-lg max-w-sm">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-white" />
+              <div>
+                <p className="text-white font-medium text-sm">{messageWarning}</p>
+              </div>
+              <button 
+                onClick={() => setMessageWarning(null)}
+                className="text-white hover:text-yellow-200 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>

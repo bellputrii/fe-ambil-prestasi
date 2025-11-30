@@ -10,9 +10,13 @@ import {
   MapPin, 
   Instagram,
   Music,
-  ArrowRight,
+  Linkedin,
   Home,
+  ClipboardList,
+  LayoutDashboard,
   Settings,
+  Star,
+  Ticket,
   HelpCircle,
   Shield,
   FileText,
@@ -20,33 +24,57 @@ import {
 } from 'lucide-react'
 
 interface FooterProps {
-  role?: 'student' | 'teacher'
+  role?: 'student' | 'teacher' | 'admin'
+  hasSubscription?: boolean
 }
 
-export default function Footer({ role = 'student' }: FooterProps) {
+export default function Footer({ role = 'student', hasSubscription = false }: FooterProps) {
   const currentYear = new Date().getFullYear()
 
-  // Links untuk Student
-  const studentQuickLinks = [
-    { name: 'E-Learning', href: '/elearning', icon: <BookOpen className="w-4 h-4" /> },
-    { name: 'Kisah Inspiratif', href: '/kisah-inspiratif', icon: <Users className="w-4 h-4" /> },
-    { name: 'E-Mentoring', href: '/ementoring', icon: <GraduationCap className="w-4 h-4" /> },
-    { name: 'Course Saya', href: '/mycourse', icon: <BookOpen className="w-4 h-4" /> },
-  ]
+  // Links untuk Student berdasarkan subscription status
+  const getStudentQuickLinks = () => {
+    if (hasSubscription) {
+      return [
+        { name: 'Home', href: '/home-student', icon: <Home className="w-4 h-4" /> },
+        { name: 'My Courses', href: '/mycourse', icon: <ClipboardList className="w-4 h-4" /> },
+      ]
+    } else {
+      return [
+        { name: 'Dashboard', href: '/home', icon: <Home className="w-4 h-4" /> },
+        { name: 'E-Learning', href: '/elearning', icon: <BookOpen className="w-4 h-4" /> },
+        { name: 'E-Mentoring', href: '/ementoring', icon: <GraduationCap className="w-4 h-4" /> },
+      ]
+    }
+  }
 
   // Links untuk Teacher
   const teacherQuickLinks = [
-    { name: 'Home', href: '/teacher', icon: <Home className="w-4 h-4" /> },
-    { name: 'Kelola Kelas', href: '/teacher/kelola-kelas', icon: <Settings className="w-4 h-4" /> },
+    { name: 'Dashboard', href: '/beranda', icon: <Home className="w-4 h-4" /> },
+    { name: 'Kelola Kelas', href: '/classes', icon: <LayoutDashboard className="w-4 h-4" /> },
   ]
 
-  // Support links dengan icon dan redirect ke dashboard
-  const supportLinks = [
-    { name: 'Bantuan & FAQ', href: role === 'teacher' ? '/beranda' : '/home', icon: <HelpCircle className="w-4 h-4" /> },
-    { name: 'Kebijakan Privasi', href: role === 'teacher' ? '/beranda' : '/home', icon: <Shield className="w-4 h-4" /> },
-    { name: 'Syarat & Ketentuan', href: role === 'teacher' ? '/beranda' : '/home', icon: <FileText className="w-4 h-4" /> },
-    { name: 'Kontak Kami', href: role === 'teacher' ? '/beranda' : '/home', icon: <MessageCircle className="w-4 h-4" /> },
+  // Links untuk Admin
+  const adminQuickLinks = [
+    { name: 'Dashboard', href: '/dashboard', icon: <Home className="w-4 h-4" /> },
+    { name: 'Teacher', href: '/teacher', icon: <Users className="w-4 h-4" /> },
+    { name: 'Categories', href: '/categories', icon: <Settings className="w-4 h-4" /> },
+    { name: 'Review', href: '/admin-review', icon: <Star className="w-4 h-4" /> },
+    { name: 'Redeem', href: '/redeem', icon: <Ticket className="w-4 h-4" /> },
   ]
+
+  // Support links dengan redirect berdasarkan role
+  const getSupportLinks = () => {
+    const baseHref = role === 'teacher' ? '/beranda' : 
+                    role === 'admin' ? '/dashboard' : 
+                    hasSubscription ? '/home-student' : '/home'
+
+    return [
+      { name: 'Bantuan & FAQ', href: baseHref, icon: <HelpCircle className="w-4 h-4" /> },
+      { name: 'Kebijakan Privasi', href: baseHref, icon: <Shield className="w-4 h-4" /> },
+      { name: 'Syarat & Ketentuan', href: baseHref, icon: <FileText className="w-4 h-4" /> },
+      { name: 'Kontak Kami', href: baseHref, icon: <MessageCircle className="w-4 h-4" /> },
+    ]
+  }
 
   const socialLinks = [
     { 
@@ -59,10 +87,59 @@ export default function Footer({ role = 'student' }: FooterProps) {
       href: 'https://tiktok.com/@ambil.prestasi', 
       icon: <Music className="w-4 h-4" /> 
     },
+    { 
+      name: 'LinkedIn', 
+      href: 'https://www.linkedin.com/company/ambil-prestasi/', 
+      icon: <Linkedin className="w-4 h-4" /> 
+    },
   ]
 
-  const quickLinks = role === 'teacher' ? teacherQuickLinks : studentQuickLinks
-  const menuTitle = role === 'teacher' ? 'Menu Teacher' : 'Menu Utama'
+  // Tentukan quick links berdasarkan role
+  const getQuickLinks = () => {
+    switch (role) {
+      case 'teacher':
+        return teacherQuickLinks
+      case 'admin':
+        return adminQuickLinks
+      case 'student':
+      default:
+        return getStudentQuickLinks()
+    }
+  }
+
+  // Tentukan menu title berdasarkan role dan subscription
+  const getMenuTitle = () => {
+    switch (role) {
+      case 'teacher':
+        return 'Menu Teacher'
+      case 'admin':
+        return 'Menu Admin'
+      case 'student':
+        return hasSubscription ? 'Menu Student Premium' : 'Menu Student'
+      default:
+        return 'Menu Utama'
+    }
+  }
+
+  const quickLinks = getQuickLinks()
+  const supportLinks = getSupportLinks()
+  const menuTitle = getMenuTitle()
+
+  // Tentukan deskripsi berdasarkan role
+  const getDescription = () => {
+    switch (role) {
+      case 'teacher':
+        return 'Platform mengajar online terpadu untuk membantu educator membuat dan mengelola kelas dengan efektif.'
+      case 'admin':
+        return 'Platform administrasi terpadu untuk mengelola sistem pembelajaran dan konten edukasi secara menyeluruh.'
+      case 'student':
+        return hasSubscription 
+          ? 'Platform belajar premium untuk membantu mahasiswa meraih prestasi terbaik dengan akses penuh ke semua fitur.'
+          : 'Platform belajar online terpadu untuk membantu mahasiswa meraih prestasi terbaik mereka melalui e-learning, mentoring, dan komunitas inspiratif.'
+      default:
+        return 'Platform belajar online terpadu untuk membantu mahasiswa meraih prestasi terbaik mereka melalui e-learning, mentoring, dan komunitas inspiratif.'
+    }
+  }
 
   return (
     <footer className="bg-blue-800 text-white">
@@ -76,13 +153,20 @@ export default function Footer({ role = 'student' }: FooterProps) {
               <div className="bg-white w-10 h-10 rounded-lg flex items-center justify-center">
                 <span className="text-blue-800 font-bold text-sm">AP</span>
               </div>
-              <h3 className="text-xl font-bold">Ambil Prestasi</h3>
+              <div>
+                <h3 className="text-xl font-bold">Ambil Prestasi</h3>
+                {role && (
+                  <span className="text-xs text-blue-200 mt-1 block">
+                    {role === 'teacher' && '(Teacher)'}
+                    {role === 'admin' && '(Admin)'}
+                    {role === 'student' && hasSubscription && '(Student Premium)'}
+                    {role === 'student' && !hasSubscription && '(Student)'}
+                  </span>
+                )}
+              </div>
             </div>
             <p className="text-blue-100 leading-relaxed mb-4 text-sm">
-              {role === 'teacher' 
-                ? 'Platform mengajar online terpadu untuk membantu educator membuat dan mengelola kelas dengan efektif.'
-                : 'Platform belajar online terpadu untuk membantu mahasiswa meraih prestasi terbaik mereka melalui e-learning, mentoring, dan komunitas inspiratif.'
-              }
+              {getDescription()}
             </p>
             <div className="flex gap-3">
               {socialLinks.map((social, index) => (
@@ -169,7 +253,7 @@ export default function Footer({ role = 'student' }: FooterProps) {
             {/* Newsletter Subscription */}
             <div className="mt-6">
               <h5 className="font-semibold mb-3 text-white text-sm">
-                {role === 'teacher' ? 'Update Terbaru' : 'Berlangganan Newsletter'}
+                {role === 'teacher' || role === 'admin' ? 'Update Terbaru' : 'Berlangganan Newsletter'}
               </h5>
               <div className="flex flex-col sm:flex-row gap-2">
                 <input

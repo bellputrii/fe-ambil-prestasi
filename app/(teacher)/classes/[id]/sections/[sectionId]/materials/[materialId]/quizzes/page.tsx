@@ -62,7 +62,7 @@ export default function QuizzesPage() {
     xp: 0
   })
   
-  // State untuk message feedback
+  // State untuk message feedback dengan z-[100]
   const [messageSuccess, setMessageSuccess] = useState<string | null>(null)
   const [messageFailed, setMessageFailed] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<{show: boolean, quizId: number | null, quizTitle: string}>({
@@ -225,7 +225,7 @@ export default function QuizzesPage() {
     }))
   }
 
-  // Submit quiz form (create atau update) - DIPERBAIKI
+  // Submit quiz form (create atau update)
   const handleSubmitQuiz = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -261,13 +261,13 @@ export default function QuizzesPage() {
       let method = ''
 
       if (!editingQuiz) {
-        // CREATE - Sudah benar
+        // CREATE
         url = `${process.env.NEXT_PUBLIC_API_URL}/classes/sections/materials/${materialId}/quizzes`
         method = 'POST'
       } else {
-        // UPDATE - DIPERBAIKI: tambahkan /sections/ dalam endpoint
+        // UPDATE
         url = `${process.env.NEXT_PUBLIC_API_URL}/classes/sections/materials/${materialId}/quizzes/${editingQuiz.id}`
-        method = 'PUT' // atau 'PATCH' tergantung API
+        method = 'PUT'
       }
 
       const response = await fetch(url, {
@@ -308,7 +308,7 @@ export default function QuizzesPage() {
     }
   }
 
-  // Delete quiz - DIPERBAIKI
+  // Delete quiz
   const handleDeleteQuiz = async (quizId: number) => {
     setLoading(true)
     try {
@@ -320,7 +320,6 @@ export default function QuizzesPage() {
         return
       }
 
-      // DIPERBAIKI: Gunakan endpoint yang sama dengan update (dengan /sections/)
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/classes/sections/materials/${materialId}/quizzes/${quizId}`, {
         method: "DELETE",
         headers: { 
@@ -378,15 +377,13 @@ export default function QuizzesPage() {
 
   // Handle view detail quiz
   const handleViewDetail = (quiz: Quiz) => {
-    // TODO: Implement detail view or navigate to detail page
     console.log('View detail for quiz:', quiz)
-    // Anda bisa menambahkan modal detail atau navigate ke halaman detail
   }
 
   if (loading && !material) {
     return (
       <LayoutNavbar>
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center justify-center min-h-screen bg-white">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       </LayoutNavbar>
@@ -396,7 +393,7 @@ export default function QuizzesPage() {
   if (!material) {
     return (
       <LayoutNavbar>
-        <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-white">
           <FileText className="w-16 h-16 text-gray-300 mb-4" />
           <h2 className="text-xl font-bold text-gray-900 mb-2">Materi tidak ditemukan</h2>
           <p className="text-gray-600 mb-4">Materi yang Anda cari tidak ditemukan</p>
@@ -414,18 +411,18 @@ export default function QuizzesPage() {
   return (
     <>
       <LayoutNavbar>
-        {/* Success Message */}
+        {/* Success Message dengan z-[100] dan mx-4 untuk mobile */}
         {messageSuccess && (
-          <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
+          <div className="fixed top-4 right-4 z-[100] animate-in slide-in-from-right duration-300 mx-4">
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 shadow-lg max-w-sm">
               <div className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <div>
-                  <p className="text-green-800 font-medium text-sm">{messageSuccess}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-green-800 font-medium text-sm break-words">{messageSuccess}</p>
                 </div>
                 <button 
                   onClick={() => setMessageSuccess(null)}
-                  className="text-green-600 hover:text-green-800 transition-colors"
+                  className="text-green-600 hover:text-green-800 transition-colors flex-shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -434,18 +431,18 @@ export default function QuizzesPage() {
           </div>
         )}
 
-        {/* Error Message */}
+        {/* Error Message dengan z-[100] dan mx-4 untuk mobile */}
         {messageFailed && (
-          <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
+          <div className="fixed top-4 right-4 z-[100] animate-in slide-in-from-right duration-300 mx-4">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg max-w-sm">
               <div className="flex items-center gap-3">
                 <XCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                <div>
-                  <p className="text-red-800 font-medium text-sm">{messageFailed}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-red-800 font-medium text-sm break-words">{messageFailed}</p>
                 </div>
                 <button 
                   onClick={() => setMessageFailed(null)}
-                  className="text-red-600 hover:text-red-800 transition-colors"
+                  className="text-red-600 hover:text-red-800 transition-colors flex-shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -454,239 +451,240 @@ export default function QuizzesPage() {
           </div>
         )}
 
-        <div className="px-4 sm:px-6 lg:px-8 pt-16 md:pt-20">
-          {/* Header Section */}
-          <div className="max-w-7xl mx-auto mb-8">
-            <div className="flex items-center gap-4 mb-6">
-              <button 
-                onClick={() => router.push(`/classes/${classId}/sections/${sectionId}/materials`)}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span>Kembali ke Materi</span>
-              </button>
-            </div>
-
-            {/* Error State */}
-            {error && !loading && (
-              <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-yellow-700 font-medium">{error}</p>
-                {error.includes('login kembali') && (
-                  <button 
-                    onClick={() => router.push('/login')}
-                    className="mt-3 bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors"
-                  >
-                    Login Kembali
-                  </button>
-                )}
+        <div className="min-h-screen bg-gray-50">
+          <div className="px-4 sm:px-6 lg:px-8 pt-16 md:pt-20">
+            {/* Header Section */}
+            <div className="max-w-7xl mx-auto mb-8">
+              <div className="flex items-center gap-4 mb-6">
+                <button 
+                  onClick={() => router.push(`/classes/${classId}/sections/${sectionId}/materials`)}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                  <span className="text-sm sm:text-base">Kembali ke Materi</span>
+                </button>
               </div>
-            )}
 
-            <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-4">
-                <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                    Kelola Quiz
-                  </h1>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                    <span className="flex items-center gap-1">
-                      <BookOpen className="w-4 h-4" />
-                      Materi: {material.title}
-                    </span>
+              {/* Error State */}
+              {error && !loading && (
+                <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <p className="text-yellow-700 font-medium text-sm sm:text-base break-words">{error}</p>
+                    {error.includes('login kembali') && (
+                      <button 
+                        onClick={() => router.push('/login')}
+                        className="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors text-sm w-full sm:w-auto"
+                      >
+                        Login Kembali
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-6">
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+                  <div className="flex-1 min-w-0">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 break-words">
+                      Kelola Quiz
+                    </h1>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600">
+                      <span className="flex items-center gap-1 break-words">
+                        <BookOpen className="w-4 h-4 flex-shrink-0" />
+                        Materi: {material.title}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Quizzes Section */}
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                  Daftar Quiz
-                </h2>
-                <p className="text-gray-700 text-sm sm:text-base">
-                  Kelola quiz untuk materi `{material.title}`
-                </p>
-              </div>
-              <button 
-                onClick={handleCreateQuiz}
-                disabled={loading}
-                className="bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden sm:inline">Tambah Quiz</span>
-              </button>
-            </div>
-
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="text-gray-600 mt-4">Memuat data quiz...</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {quizzes.map((quiz) => (
-                  <div 
-                    key={quiz.id}
-                    className="bg-white rounded-xl shadow-md border border-gray-200 transition-all duration-300 hover:shadow-lg group"
-                  >
-                    <div className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-start gap-3 flex-1">
-                          <div className="bg-purple-100 text-purple-600 rounded-lg p-2 mt-1">
-                            <FileText className="w-5 h-5" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-700 transition-colors">
-                              {quiz.title}
-                            </h3>
-                            {quiz.description && (
-                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                                {quiz.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-2 ml-4">
-                          {/* Tombol Detail Quiz */}
-                          <button 
-                            onClick={() => handleViewDetail(quiz)}
-                            disabled={loading}
-                            className="bg-green-500 text-white p-2 rounded-lg transition-all duration-300 hover:bg-green-600 hover:scale-105 active:scale-95 disabled:opacity-50"
-                            title="Detail Quiz"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          {/* Tombol Kelola Questions */}
-                          <button 
-                            onClick={() => router.push(`/classes/${classId}/sections/${sectionId}/materials/${materialId}/quizzes/${quiz.id}/questions`)}
-                            disabled={loading}
-                            className="bg-purple-500 text-white p-2 rounded-lg transition-all duration-300 hover:bg-purple-600 hover:scale-105 active:scale-95 disabled:opacity-50"
-                            title="Kelola Questions"
-                          >
-                            <FileText className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleEditQuiz(quiz)}
-                            disabled={loading}
-                            className="bg-blue-500 text-white p-2 rounded-lg transition-all duration-300 hover:bg-blue-600 hover:scale-105 active:scale-95 disabled:opacity-50"
-                            title="Edit Quiz"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => openDeleteConfirm(quiz.id, quiz.title)}
-                            disabled={loading}
-                            className="bg-red-500 text-white p-2 rounded-lg transition-all duration-300 hover:bg-red-600 hover:scale-105 active:scale-95 disabled:opacity-50"
-                            title="Hapus Quiz"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Quiz Details */}
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-500 flex items-center gap-1">
-                            <Users className="w-4 h-4" />
-                            Maks Attempt
-                          </span>
-                          <span className="font-medium">{quiz.max_attempts} kali</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-500 flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            Batas Waktu
-                          </span>
-                          <span className="font-medium">{quiz.time_limit} menit</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-500 flex items-center gap-1">
-                            <Target className="w-4 h-4" />
-                            Nilai Kelulusan
-                          </span>
-                          <span className="font-medium">{quiz.passing_grade}%</span>
-                        </div>
-                        {quiz.xp && quiz.xp > 0 && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-500">XP</span>
-                            <span className="font-medium text-green-600">+{quiz.xp} XP</span>
-                          </div>
-                        )}
-                        {quiz.open_at && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-500 flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              Mulai
-                            </span>
-                            <span className="font-medium text-xs">
-                              {formatDate(quiz.open_at)}
-                            </span>
-                          </div>
-                        )}
-                        {quiz.close_at && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-500 flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              Selesai
-                            </span>
-                            <span className="font-medium text-xs">
-                              {formatDate(quiz.close_at)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Metadata */}
-                      <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100">
-                        <span className="flex items-center gap-1">
-                          <BarChart3 className="w-3 h-3" />
-                          {quiz._count?.quiz_attempt || 0} attempt
-                        </span>
-                        <span>
-                          {quiz.createdAt && `Dibuat: ${new Date(quiz.createdAt).toLocaleDateString('id-ID')}`}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {quizzes.length === 0 && !loading && (
-              <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
-                <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada quiz</h3>
-                <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                  Mulai dengan membuat quiz pertama untuk materi `{material.title}`
-                </p>
+            {/* Quizzes Section */}
+            <div className="max-w-7xl mx-auto">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2 break-words">
+                    Daftar Quiz
+                  </h2>
+                  <p className="text-gray-700 text-sm sm:text-base break-words">
+                    Kelola quiz untuk materi `{material.title}`
+                  </p>
+                </div>
                 <button 
                   onClick={handleCreateQuiz}
                   disabled={loading}
-                  className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
                 >
-                  <Plus className="w-5 h-5" />
-                  Buat Quiz Pertama
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-sm sm:text-base">Tambah Quiz</span>
                 </button>
               </div>
-            )}
+
+              {loading ? (
+                <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-gray-600 mt-4 text-sm sm:text-base">Memuat data quiz...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {quizzes.map((quiz) => (
+                    <div 
+                      key={quiz.id}
+                      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-purple-300 group"
+                    >
+                      {/* Quiz Header dengan Gradient */}
+                      <div className="relative h-32 w-full overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+                        <FileText className="w-12 h-12 text-white opacity-90" />
+                      </div>
+                      
+                      <div className="p-4 sm:p-5">
+                        <div className="flex items-start justify-between mb-3">
+                          <h3 className="font-bold text-base sm:text-lg text-gray-900 line-clamp-2 break-words group-hover:text-purple-700 transition-colors flex-1 min-w-0 mr-2">
+                            {quiz.title}
+                          </h3>
+                          
+                          {/* Action Buttons - Layout lebih rapi */}
+                          <div className="flex gap-1 flex-shrink-0">
+                            <button 
+                              onClick={() => handleViewDetail(quiz)}
+                              disabled={loading}
+                              className="bg-green-500 text-white p-1.5 sm:p-2 rounded-lg transition-all duration-300 hover:bg-green-600 hover:scale-105 active:scale-95 disabled:opacity-50 flex items-center justify-center"
+                              title="Detail Quiz"
+                            >
+                              <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </button>
+                            <button 
+                              onClick={() => router.push(`/classes/${classId}/sections/${sectionId}/materials/${materialId}/quizzes/${quiz.id}/questions`)}
+                              disabled={loading}
+                              className="bg-purple-500 text-white p-1.5 sm:p-2 rounded-lg transition-all duration-300 hover:bg-purple-600 hover:scale-105 active:scale-95 disabled:opacity-50 flex items-center justify-center"
+                              title="Kelola Questions"
+                            >
+                              <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleEditQuiz(quiz)}
+                              disabled={loading}
+                              className="bg-blue-500 text-white p-1.5 sm:p-2 rounded-lg transition-all duration-300 hover:bg-blue-600 hover:scale-105 active:scale-95 disabled:opacity-50 flex items-center justify-center"
+                              title="Edit Quiz"
+                            >
+                              <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </button>
+                            <button 
+                              onClick={() => openDeleteConfirm(quiz.id, quiz.title)}
+                              disabled={loading}
+                              className="bg-red-500 text-white p-1.5 sm:p-2 rounded-lg transition-all duration-300 hover:bg-red-600 hover:scale-105 active:scale-95 disabled:opacity-50 flex items-center justify-center"
+                              title="Hapus Quiz"
+                            >
+                              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {quiz.description && (
+                          <p className="text-gray-600 text-sm mb-3 sm:mb-4 line-clamp-2 break-words">
+                            {quiz.description}
+                          </p>
+                        )}
+
+                        {/* Quiz Details */}
+                        <div className="space-y-2 mb-4">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-500 flex items-center gap-1 break-words">
+                              <Users className="w-4 h-4 flex-shrink-0" />
+                              <span className="hidden xs:inline">Maks Attempt</span>
+                            </span>
+                            <span className="font-medium text-gray-900">{quiz.max_attempts} kali</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-500 flex items-center gap-1 break-words">
+                              <Clock className="w-4 h-4 flex-shrink-0" />
+                              <span className="hidden xs:inline">Batas Waktu</span>
+                            </span>
+                            <span className="font-medium text-gray-900">{quiz.time_limit} menit</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-500 flex items-center gap-1 break-words">
+                              <Target className="w-4 h-4 flex-shrink-0" />
+                              <span className="hidden xs:inline">Nilai Kelulusan</span>
+                            </span>
+                            <span className="font-medium text-gray-900">{quiz.passing_grade}%</span>
+                          </div>
+                          {quiz.xp && quiz.xp > 0 && (
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-500 break-words">XP Reward</span>
+                              <span className="font-medium text-green-600">+{quiz.xp} XP</span>
+                            </div>
+                          )}
+                          {quiz.open_at && (
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-500 flex items-center gap-1 break-words">
+                                <Calendar className="w-4 h-4 flex-shrink-0" />
+                                <span className="hidden xs:inline">Mulai</span>
+                              </span>
+                              <span className="font-medium text-gray-900 text-xs break-words text-right">
+                                {formatDate(quiz.open_at)}
+                              </span>
+                            </div>
+                          )}
+                          {quiz.close_at && (
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-500 flex items-center gap-1 break-words">
+                                <Calendar className="w-4 h-4 flex-shrink-0" />
+                                <span className="hidden xs:inline">Selesai</span>
+                              </span>
+                              <span className="font-medium text-gray-900 text-xs break-words text-right">
+                                {formatDate(quiz.close_at)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Metadata */}
+                        <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100">
+                          <span className="flex items-center gap-1 break-words">
+                            <BarChart3 className="w-3 h-3 flex-shrink-0" />
+                            {quiz._count?.quiz_attempt || 0} attempt
+                          </span>
+                          <span className="break-words text-right">
+                            {quiz.createdAt && `Dibuat: ${new Date(quiz.createdAt).toLocaleDateString('id-ID')}`}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {quizzes.length === 0 && !loading && (
+                <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
+                  <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada quiz</h3>
+                  <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md mx-auto break-words">
+                    Mulai dengan membuat quiz pertama untuk materi `{material.title}`
+                  </p>
+                  <button 
+                    onClick={handleCreateQuiz}
+                    disabled={loading}
+                    className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Buat Quiz Pertama
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </LayoutNavbar>
       <Footer/>
 
-      {/* Create/Edit Quiz Modal */}
+      {/* Create/Edit Quiz Modal dengan standar yang ditentukan */}
       {showQuizModal && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-gray-200 shadow-2xl">
             {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-white">
-              <h3 className="text-xl font-bold text-gray-900">
+            <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200 bg-white">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                 {editingQuiz ? 'Edit Quiz' : 'Tambah Quiz Baru'}
               </h3>
               <button 
@@ -697,14 +695,14 @@ export default function QuizzesPage() {
                 className="text-gray-400 hover:text-gray-600 transition-colors"
                 disabled={loading}
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
             {/* Modal Body - Scrollable */}
             <div className="flex-1 overflow-y-auto">
-              <form onSubmit={handleSubmitQuiz} className="p-6">
-                <div className="space-y-6">
+              <form onSubmit={handleSubmitQuiz} className="p-4 sm:p-6">
+                <div className="space-y-4 sm:space-y-6">
                   {/* Title Input */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -717,7 +715,7 @@ export default function QuizzesPage() {
                       value={quizForm.title}
                       onChange={handleQuizInputChange}
                       disabled={loading}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white text-sm sm:text-base"
                       placeholder="Masukkan judul quiz"
                     />
                   </div>
@@ -733,13 +731,13 @@ export default function QuizzesPage() {
                       onChange={handleQuizInputChange}
                       rows={3}
                       disabled={loading}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 resize-none disabled:opacity-50 bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 resize-none disabled:opacity-50 bg-white text-sm sm:text-base"
                       placeholder="Deskripsi quiz (opsional)"
                     />
                   </div>
 
                   {/* Quiz Settings */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     {/* Max Attempts */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -753,7 +751,7 @@ export default function QuizzesPage() {
                         value={quizForm.max_attempts}
                         onChange={handleQuizInputChange}
                         disabled={loading}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white text-sm sm:text-base"
                       />
                     </div>
 
@@ -770,7 +768,7 @@ export default function QuizzesPage() {
                         value={quizForm.time_limit}
                         onChange={handleQuizInputChange}
                         disabled={loading}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white text-sm sm:text-base"
                       />
                     </div>
 
@@ -787,7 +785,7 @@ export default function QuizzesPage() {
                         value={quizForm.passing_grade}
                         onChange={handleQuizInputChange}
                         disabled={loading}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white text-sm sm:text-base"
                       />
                     </div>
 
@@ -804,14 +802,14 @@ export default function QuizzesPage() {
                         value={quizForm.xp}
                         onChange={handleQuizInputChange}
                         disabled={loading}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white text-sm sm:text-base"
                         placeholder="XP yang didapat saat lulus"
                       />
                     </div>
                   </div>
 
                   {/* Date & Time */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     {/* Open At */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -823,7 +821,7 @@ export default function QuizzesPage() {
                         value={quizForm.open_at}
                         onChange={handleQuizInputChange}
                         disabled={loading}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white text-sm sm:text-base"
                       />
                     </div>
 
@@ -838,14 +836,14 @@ export default function QuizzesPage() {
                         value={quizForm.close_at}
                         onChange={handleQuizInputChange}
                         disabled={loading}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white text-sm sm:text-base"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Modal Footer */}
-                <div className="flex gap-3 justify-end mt-8 pt-6 border-t border-gray-200">
+                <div className="flex gap-3 justify-end mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200">
                   <button
                     type="button"
                     onClick={() => {
@@ -853,19 +851,19 @@ export default function QuizzesPage() {
                       resetQuizForm()
                     }}
                     disabled={loading}
-                    className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors font-medium disabled:opacity-50"
+                    className="px-4 sm:px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors font-medium disabled:opacity-50 text-sm sm:text-base"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm sm:text-base hover:scale-105 active:scale-95 transition-all duration-200"
                   >
                     {loading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Menyimpan...
+                        <span className="text-sm sm:text-base">Menyimpan...</span>
                       </>
                     ) : (
                       editingQuiz ? 'Simpan Perubahan' : 'Buat Quiz'
@@ -881,16 +879,16 @@ export default function QuizzesPage() {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm.show && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full border border-gray-200 shadow-2xl">
-            <div className="p-6">
+          <div className="bg-white rounded-xl max-w-md w-full border border-gray-200 shadow-2xl mx-4">
+            <div className="p-4 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="bg-red-100 p-2 rounded-full">
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                  <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">Konfirmasi Hapus</h3>
+                <h3 className="text-lg font-bold text-gray-900 break-words">Konfirmasi Hapus</h3>
               </div>
               
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 mb-6 text-sm sm:text-base break-words">
                 Apakah Anda yakin ingin menghapus quiz <span className="font-semibold text-gray-900">`{showDeleteConfirm.quizTitle}`</span>? Tindakan ini tidak dapat dibatalkan.
               </p>
 
@@ -898,19 +896,19 @@ export default function QuizzesPage() {
                 <button
                   onClick={() => setShowDeleteConfirm({ show: false, quizId: null, quizTitle: '' })}
                   disabled={loading}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors font-medium disabled:opacity-50"
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors font-medium disabled:opacity-50 text-sm sm:text-base"
                 >
                   Batal
                 </button>
                 <button
                   onClick={() => showDeleteConfirm.quizId && handleDeleteQuiz(showDeleteConfirm.quizId)}
                   disabled={loading}
-                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm sm:text-base hover:scale-105 active:scale-95 transition-all duration-200"
                 >
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Menghapus...
+                      <span className="text-sm sm:text-base">Menghapus...</span>
                     </>
                   ) : (
                     <>

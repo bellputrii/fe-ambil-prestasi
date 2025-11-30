@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Image from 'next/image'
 import LayoutNavbar from '@/components/public/LayoutNavbar'
 import { ArrowLeft, Plus, Edit, Trash2, FileText, Video, File, Image as ImageIcon, BookOpen, Download, X, CheckCircle, XCircle, AlertTriangle, List, Info, Eye, Play, ExternalLink } from 'lucide-react'
 import Footer from '@/components/public/Footer'
@@ -49,6 +50,24 @@ interface ApiResponse {
   message?: string
 }
 
+// Helper function untuk image URL
+const getValidImageUrl = (path: string | null | undefined): string => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  if (!path.startsWith('/')) {
+    return `/${path}`;
+  }
+  return path;
+};
+
+const isValidImage = (path: string | null | undefined): boolean => {
+  if (!path) return false;
+  const validUrl = getValidImageUrl(path);
+  return validUrl.length > 0;
+};
+
 export default function MaterialsPage() {
   const params = useParams()
   const router = useRouter()
@@ -74,7 +93,7 @@ export default function MaterialsPage() {
     thumnail?: File | null;
   }>({})
   
-  // State untuk message feedback
+  // State untuk message feedback dengan z-[100]
   const [messageSuccess, setMessageSuccess] = useState<string | null>(null)
   const [messageFailed, setMessageFailed] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<{show: boolean, materialId: number | null, materialTitle: string}>({
@@ -97,7 +116,7 @@ export default function MaterialsPage() {
     files: {
       maxSize: 10 * 1024 * 1024, // 10MB
       video: {
-        maxSize: 50 * 1024 * 1024, // 50MB untuk video
+        maxSize: 120 * 1024 * 1024, // 120MB untuk video
         formats: ['.mp4', '.mov', '.avi', '.mkv']
       },
       materialFile: {
@@ -127,7 +146,7 @@ export default function MaterialsPage() {
     }
   }, [messageSuccess, messageFailed])
 
-  // Fetch section data dengan struktur yang konsisten
+  // Fetch section data
   const fetchSectionData = async () => {
     try {
       const token = localStorage.getItem("token")
@@ -170,7 +189,7 @@ export default function MaterialsPage() {
     }
   }
 
-  // Fetch class data dengan struktur yang konsisten
+  // Fetch class data
   const fetchClassData = async () => {
     try {
       const token = localStorage.getItem("token")
@@ -213,7 +232,7 @@ export default function MaterialsPage() {
     }
   }
 
-  // Fetch materials dengan struktur yang konsisten
+  // Fetch materials
   const fetchMaterials = async () => {
     setLoading(true)
     try {
@@ -271,7 +290,7 @@ export default function MaterialsPage() {
         return
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/materials/${materialId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/classes/sections/${sectionId}/materials/${materialId}`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -307,12 +326,10 @@ export default function MaterialsPage() {
 
   // Open detail modal
   const handleViewDetail = (material: Material) => {
-    // Jika data sudah lengkap (dari response materials), langsung tampilkan
     if (material.video_path || material.thumnail_path) {
       setDetailMaterial(material)
       setShowDetailModal(true)
     } else {
-      // Jika data tidak lengkap, fetch detail dari API
       fetchMaterialDetail(material.id)
     }
   }
@@ -339,7 +356,6 @@ export default function MaterialsPage() {
     const file = e.target.files?.[0]
     
     if (file) {
-      // Validasi ukuran file
       const maxSize = fieldName === 'video' 
         ? VALIDATION_RULES.files.video.maxSize 
         : fieldName === 'thumnail'
@@ -349,11 +365,10 @@ export default function MaterialsPage() {
       if (file.size > maxSize) {
         const maxSizeMB = maxSize / (1024 * 1024)
         setMessageFailed(`Ukuran file ${fieldName} terlalu besar. Maksimal ${maxSizeMB}MB`)
-        e.target.value = '' // Reset input file
+        e.target.value = ''
         return
       }
 
-      // Validasi format file
       const fileName = file.name.toLowerCase()
       let isValidFormat = false
 
@@ -394,7 +409,7 @@ export default function MaterialsPage() {
           thumnail: VALIDATION_RULES.files.thumnail.formats.join(', ')
         }
         setMessageFailed(`Format file tidak didukung untuk ${fieldName}. Format yang diperbolehkan: ${allowedFormats[fieldName]}`)
-        e.target.value = '' // Reset input file
+        e.target.value = ''
         return
       }
     }
@@ -431,11 +446,10 @@ export default function MaterialsPage() {
     setShowMaterialModal(true)
   }
 
-  // Submit material form (create atau update) - dengan struktur yang konsisten
+  // Submit material form (create atau update)
   const handleSubmitMaterial = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Validasi judul
     if (!materialForm.title.trim()) {
       setMessageFailed('Judul materi wajib diisi')
       return
@@ -462,13 +476,11 @@ export default function MaterialsPage() {
         return
       }
 
-      // CREATE MATERIAL - menggunakan FormData
       if (!editingMaterial) {
         const formData = new FormData()
         formData.append('title', materialForm.title.trim())
         formData.append('content', materialForm.content.trim())
 
-        // Append files if they exist
         if (files.video) formData.append('video', files.video)
         if (files.materialFile) formData.append('materialFile', files.materialFile)
         if (files.ringkasan) formData.append('ringkasan', files.ringkasan)
@@ -504,14 +516,11 @@ export default function MaterialsPage() {
         } else {
           throw new Error(result.message || 'Failed to create material')
         }
-      } 
-      // UPDATE MATERIAL - menggunakan FormData
-      else {
+      } else {
         const formData = new FormData()
         formData.append('title', materialForm.title.trim())
         formData.append('content', materialForm.content.trim())
 
-        // Append files if they exist
         if (files.video) formData.append('video', files.video)
         if (files.materialFile) formData.append('materialFile', files.materialFile)
         if (files.ringkasan) formData.append('ringkasan', files.ringkasan)
@@ -556,7 +565,7 @@ export default function MaterialsPage() {
     }
   }
 
-  // Delete material dengan struktur yang konsisten
+  // Delete material
   const handleDeleteMaterial = async (materialId: number) => {
     setLoading(true)
     try {
@@ -612,49 +621,10 @@ export default function MaterialsPage() {
     })
   }
 
-  // Get file type icon
-  const getFileTypeIcon = (fileName: string) => {
-    if (fileName?.includes('.mp4') || fileName?.includes('.mov') || fileName?.includes('.avi')) {
-      return <Video className="w-4 h-4" />
-    }
-    if (fileName?.includes('.jpg') || fileName?.includes('.png') || fileName?.includes('.jpeg')) {
-      return <ImageIcon className="w-4 h-4" />
-    }
-    return <File className="w-4 h-4" />
-  }
-
-  // Get file type label
-  const getFileTypeLabel = (fileName: string) => {
-    if (fileName?.includes('.mp4') || fileName?.includes('.mov') || fileName?.includes('.avi')) {
-      return 'Video'
-    }
-    if (fileName?.includes('.jpg') || fileName?.includes('.png') || fileName?.includes('.jpeg')) {
-      return 'Gambar'
-    }
-    if (fileName?.includes('.pdf')) {
-      return 'PDF'
-    }
-    if (fileName?.includes('.doc') || fileName?.includes('.docx')) {
-      return 'Dokumen'
-    }
-    return 'File'
-  }
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
   if (loading && !section) {
     return (
       <LayoutNavbar>
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center justify-center min-h-screen bg-white">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       </LayoutNavbar>
@@ -664,7 +634,7 @@ export default function MaterialsPage() {
   if (!section) {
     return (
       <LayoutNavbar>
-        <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-white">
           <FileText className="w-16 h-16 text-gray-300 mb-4" />
           <h2 className="text-xl font-bold text-gray-900 mb-2">Section tidak ditemukan</h2>
           <p className="text-gray-600 mb-4">Section yang Anda cari tidak ditemukan</p>
@@ -682,18 +652,18 @@ export default function MaterialsPage() {
   return (
     <>
       <LayoutNavbar>
-        {/* Success Message */}
+        {/* Success Message dengan z-[100] dan mx-4 untuk mobile */}
         {messageSuccess && (
-          <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
+          <div className="fixed top-4 right-4 z-[100] animate-in slide-in-from-right duration-300 mx-4">
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 shadow-lg max-w-sm">
               <div className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <div>
-                  <p className="text-green-800 font-medium text-sm">{messageSuccess}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-green-800 font-medium text-sm break-words">{messageSuccess}</p>
                 </div>
                 <button 
                   onClick={() => setMessageSuccess(null)}
-                  className="text-green-600 hover:text-green-800 transition-colors"
+                  className="text-green-600 hover:text-green-800 transition-colors flex-shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -702,18 +672,18 @@ export default function MaterialsPage() {
           </div>
         )}
 
-        {/* Error Message */}
+        {/* Error Message dengan z-[100] dan mx-4 untuk mobile */}
         {messageFailed && (
-          <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
+          <div className="fixed top-4 right-4 z-[100] animate-in slide-in-from-right duration-300 mx-4">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg max-w-sm">
               <div className="flex items-center gap-3">
                 <XCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                <div>
-                  <p className="text-red-800 font-medium text-sm">{messageFailed}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-red-800 font-medium text-sm break-words">{messageFailed}</p>
                 </div>
                 <button 
                   onClick={() => setMessageFailed(null)}
-                  className="text-red-600 hover:text-red-800 transition-colors"
+                  className="text-red-600 hover:text-red-800 transition-colors flex-shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -722,248 +692,207 @@ export default function MaterialsPage() {
           </div>
         )}
 
-        <div className="px-4 sm:px-6 lg:px-8 pt-16 md:pt-20">
-          {/* Header Section */}
-          <div className="max-w-7xl mx-auto mb-8">
-            <div className="flex items-center gap-4 mb-6">
-              <button 
-                onClick={() => router.push(`/classes/${classId}`)}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span>Kembali ke Kelas</span>
-              </button>
-              <div className="h-4 w-px bg-gray-300"></div>
-              <button 
-                onClick={() => router.push(`/classes/${classId}`)}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <List className="w-4 h-4" />
-                <span>Kembali ke Section</span>
-              </button>
-            </div>
-
-            {/* Error State */}
-            {error && !loading && (
-              <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-yellow-700 font-medium">{error}</p>
-                {error.includes('login kembali') && (
-                  <button 
-                    onClick={() => router.push('/login')}
-                    className="mt-3 bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors"
-                  >
-                    Login Kembali
-                  </button>
-                )}
+        <div className="min-h-screen bg-gray-50">
+          <div className="px-4 sm:px-6 lg:px-8 pt-16 md:pt-20">
+            {/* Header Section */}
+            <div className="max-w-7xl mx-auto mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+                <button 
+                  onClick={() => router.push(`/classes/${classId}`)}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors w-full sm:w-auto justify-center sm:justify-start"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                  <span className="text-sm sm:text-base">Kembali ke Kelas</span>
+                </button>
+                <div className="hidden sm:block h-4 w-px bg-gray-300"></div>
+                <button 
+                  onClick={() => router.push(`/classes/${classId}`)}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors w-full sm:w-auto justify-center sm:justify-start"
+                >
+                  <List className="w-4 h-4" />
+                  <span className="text-sm sm:text-base">Kembali ke Section</span>
+                </button>
               </div>
-            )}
 
-            <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-4">
-                <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                    Materi Pembelajaran
-                  </h1>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                    <span className="flex items-center gap-1">
-                      <BookOpen className="w-4 h-4" />
-                      {classData?.name}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <List className="w-4 h-4" />
-                      {section.title}
-                    </span>
+              {/* Error State */}
+              {error && !loading && (
+                <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <p className="text-yellow-700 font-medium text-sm sm:text-base">{error}</p>
+                    {error.includes('login kembali') && (
+                      <button 
+                        onClick={() => router.push('/login')}
+                        className="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors text-sm w-full sm:w-auto"
+                      >
+                        Login Kembali
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-6">
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+                  <div className="flex-1 min-w-0">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 break-words">
+                      Materi Pembelajaran
+                    </h1>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
+                      <span className="flex items-center gap-1">
+                        <BookOpen className="w-4 h-4" />
+                        <span className="break-words">{classData?.name}</span>
+                      </span>
+                      <span className="hidden sm:block">•</span>
+                      <span className="flex items-center gap-1">
+                        <List className="w-4 h-4" />
+                        <span className="break-words">{section.title}</span>
+                      </span>
+                    </div>
                     {section.description && (
-                      <span className="text-gray-500">{section.description}</span>
+                      <p className="text-gray-500 text-sm mt-2 break-words">{section.description}</p>
                     )}
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Materials Section */}
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                  Daftar Materi
-                </h2>
-                <p className="text-gray-700 text-sm sm:text-base">
-                  Kelola materi pembelajaran untuk section `{section.title}`
-                </p>
+            {/* Materials Section */}
+            <div className="max-w-7xl mx-auto">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2 break-words">
+                    Daftar Materi
+                  </h2>
+                  <p className="text-gray-700 text-sm sm:text-base break-words">
+                    Kelola materi pembelajaran untuk section `{section.title}`
+                  </p>
+                </div>
+                <button 
+                  onClick={handleCreateMaterial}
+                  disabled={loading}
+                  className="bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
+                >
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-sm sm:text-base">Tambah Materi</span>
+                </button>
               </div>
-              <button 
-                onClick={handleCreateMaterial}
-                disabled={loading}
-                className="bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden sm:inline">Tambah Materi</span>
-              </button>
-            </div>
 
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="text-gray-600 mt-4">Memuat data materi...</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {materials.map((material) => (
-                  <div 
-                    key={material.id}
-                    className="bg-white rounded-xl shadow-md border border-gray-200 transition-all duration-300 hover:shadow-lg group"
-                  >
-                    <div className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-start gap-3 flex-1">
-                          <div className="bg-blue-100 text-blue-600 rounded-lg p-2 mt-1">
-                            <FileText className="w-5 h-5" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-700 transition-colors">
-                              {material.title}
-                            </h3>
-                            {material.content && (
-                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                                {material.content}
-                              </p>
-                            )}
-                          </div>
+              {loading ? (
+                <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-gray-600 mt-4 text-sm sm:text-base">Memuat data materi...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {materials.map((material) => (
+                    <div 
+                      key={material.id}
+                      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-blue-300 group"
+                    >
+                      {/* Material Header dengan Gradient */}
+                      <div className="relative h-32 w-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                        <FileText className="w-12 h-12 text-white opacity-90" />
+                        
+                        {/* Order Badge */}
+                        <div className="absolute top-3 left-3">
+                          <span className="bg-white text-blue-600 text-xs px-2 py-1 rounded-full font-medium">
+                            #{material.order}
+                          </span>
                         </div>
+                      </div>
+                      
+                      <div className="p-4 sm:p-5">
+                        <h3 className="font-bold text-base sm:text-lg text-gray-900 mb-2 line-clamp-2 break-words group-hover:text-blue-700 transition-colors">
+                          {material.title}
+                        </h3>
+                        
+                        {material.content && (
+                          <p className="text-gray-600 text-sm mb-3 sm:mb-4 line-clamp-2 break-words">
+                            {material.content}
+                          </p>
+                        )}
 
-                        {/* Action Buttons */}
-                        <div className="flex gap-2 ml-4">
+                        {/* Action Buttons dengan layout yang lebih baik */}
+                        <div className="flex gap-2">
                           <button 
                             onClick={() => handleViewDetail(material)}
                             disabled={loading}
-                            className="bg-green-500 text-white p-2 rounded-lg transition-all duration-300 hover:bg-green-600 hover:scale-105 active:scale-95 disabled:opacity-50"
-                            title="Lihat Detail"
+                            className="flex-1 bg-blue-500 text-white py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 hover:bg-blue-600 hover:scale-105 active:scale-95 flex items-center justify-center gap-1 sm:gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Lihat Detail Materi"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="hidden xs:inline">Detail</span>
                           </button>
-                          {/* Tombol Kelola Quiz */}
                           <button 
                             onClick={() => router.push(`/classes/${classId}/sections/${sectionId}/materials/${material.id}/quizzes`)}
                             disabled={loading}
-                            className="bg-purple-500 text-white p-2 rounded-lg transition-all duration-300 hover:bg-purple-600 hover:scale-105 active:scale-95 disabled:opacity-50"
+                            className="flex-1 bg-purple-500 text-white py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 hover:bg-purple-600 hover:scale-105 active:scale-95 flex items-center justify-center gap-1 sm:gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Kelola Quiz"
                           >
-                            <FileText className="w-4 h-4" />
+                            <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="hidden xs:inline">Quiz</span>
                           </button>
                           <button 
                             onClick={() => handleEditMaterial(material)}
                             disabled={loading}
-                            className="bg-blue-500 text-white p-2 rounded-lg transition-all duration-300 hover:bg-blue-600 hover:scale-105 active:scale-95 disabled:opacity-50"
+                            className="bg-gray-100 text-gray-700 py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 hover:bg-gray-200 hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Edit Materi"
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                           </button>
                           <button 
                             onClick={() => openDeleteConfirm(material.id, material.title)}
                             disabled={loading}
-                            className="bg-red-500 text-white p-2 rounded-lg transition-all duration-300 hover:bg-red-600 hover:scale-105 active:scale-95 disabled:opacity-50"
+                            className="bg-gray-100 text-gray-700 py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 hover:bg-red-500 hover:text-white hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Hapus Materi"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                           </button>
                         </div>
-                      </div>
 
-                      {/* File Attachments */}
-                      <div className="space-y-2 mb-4">
-                        {material.video && (
-                          <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                            <div className="flex items-center gap-2">
-                              <Video className="w-4 h-4 text-blue-600" />
-                              <span className="text-sm text-gray-700">Video Materi</span>
-                            </div>
-                            <button className="text-blue-600 hover:text-blue-800 transition-colors">
-                              <Download className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-                        
-                        {material.materialFile && (
-                          <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                            <div className="flex items-center gap-2">
-                              <File className="w-4 h-4 text-green-600" />
-                              <span className="text-sm text-gray-700">File Materi</span>
-                            </div>
-                            <button className="text-green-600 hover:text-green-800 transition-colors">
-                              <Download className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-
-                        {material.ringkasan && (
-                          <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                            <div className="flex items-center gap-2">
-                              <FileText className="w-4 h-4 text-purple-600" />
-                              <span className="text-sm text-gray-700">Ringkasan</span>
-                            </div>
-                            <button className="text-purple-600 hover:text-purple-800 transition-colors">
-                              <Download className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-
-                        {material.template && (
-                          <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                            <div className="flex items-center gap-2">
-                              <File className="w-4 h-4 text-orange-600" />
-                              <span className="text-sm text-gray-700">Template</span>
-                            </div>
-                            <button className="text-orange-600 hover:text-orange-800 transition-colors">
-                              <Download className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Metadata */}
-                      <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100">
-                        <span>Urutan: {material.order}</span>
-                        <span>
-                          {material.createdAt && `Dibuat: ${new Date(material.createdAt).toLocaleDateString('id-ID')}`}
-                        </span>
+                        {/* Metadata */}
+                        <div className="flex items-center justify-between text-xs text-gray-500 pt-3 mt-3 border-t border-gray-100">
+                          <span className="break-words">Urutan: {material.order}</span>
+                          <span className="break-words">
+                            {material.createdAt && `Dibuat: ${new Date(material.createdAt).toLocaleDateString('id-ID')}`}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
 
-            {materials.length === 0 && !loading && (
-              <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
-                <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada materi</h3>
-                <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                  Mulai dengan membuat materi pertama untuk section `{section.title}`
-                </p>
-                <button 
-                  onClick={handleCreateMaterial}
-                  disabled={loading}
-                  className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Plus className="w-5 h-5" />
-                  Buat Materi Pertama
-                </button>
-              </div>
-            )}
+              {materials.length === 0 && !loading && (
+                <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
+                  <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada materi</h3>
+                  <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md mx-auto break-words">
+                    Mulai dengan membuat materi pertama untuk section `{section.title}`
+                  </p>
+                  <button 
+                    onClick={handleCreateMaterial}
+                    disabled={loading}
+                    className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Buat Materi Pertama
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </LayoutNavbar>
       <Footer/>
 
-      {/* Create/Edit Material Modal */}
+      {/* Create/Edit Material Modal dengan standar yang ditentukan */}
       {showMaterialModal && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-gray-200 shadow-2xl">
             {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-white">
-              <h3 className="text-xl font-bold text-gray-900">
+            <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200 bg-white">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                 {editingMaterial ? 'Edit Materi' : 'Tambah Materi Baru'}
               </h3>
               <button 
@@ -974,14 +903,14 @@ export default function MaterialsPage() {
                 className="text-gray-400 hover:text-gray-600 transition-colors"
                 disabled={loading}
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
             {/* Modal Body - Scrollable */}
             <div className="flex-1 overflow-y-auto">
-              <form onSubmit={handleSubmitMaterial} className="p-6">
-                <div className="space-y-6">
+              <form onSubmit={handleSubmitMaterial} className="p-4 sm:p-6">
+                <div className="space-y-4 sm:space-y-6">
                   {/* Title Input */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -994,14 +923,14 @@ export default function MaterialsPage() {
                       value={materialForm.title}
                       onChange={handleMaterialInputChange}
                       disabled={loading}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white text-sm sm:text-base"
                       placeholder={`Masukkan judul materi (minimal ${VALIDATION_RULES.title.minLength} karakter)`}
                       minLength={VALIDATION_RULES.title.minLength}
                       maxLength={VALIDATION_RULES.title.maxLength}
                     />
                     <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
                       <Info className="w-3 h-3" />
-                      <span>
+                      <span className="break-words">
                         {materialForm.title.length}/{VALIDATION_RULES.title.maxLength} karakter
                         {materialForm.title.length > 0 && materialForm.title.length < VALIDATION_RULES.title.minLength && (
                           <span className="text-red-500 ml-2">
@@ -1023,30 +952,30 @@ export default function MaterialsPage() {
                       onChange={handleMaterialInputChange}
                       rows={4}
                       disabled={loading}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 resize-none disabled:opacity-50 bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 resize-none disabled:opacity-50 bg-white text-sm sm:text-base"
                       placeholder="Deskripsi atau konten materi (opsional)"
                     />
                   </div>
 
-                  {/* File Uploads */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* File Uploads - Grid responsif */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     {/* Video Upload */}
-                    <div>
+                    <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Video Materi
                       </label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition-colors">
-                        <Video className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600 mb-1">Upload video materi</p>
-                        <p className="text-xs text-gray-500 mb-2">
-                          Format: {VALIDATION_RULES.files.video.formats.join(', ')} | Maks: 50MB
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 sm:p-4 text-center hover:border-blue-500 transition-colors bg-gray-50">
+                        <Video className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600 mb-1 break-words">Upload video materi</p>
+                        <p className="text-xs text-gray-500 mb-2 break-words">
+                          Format: {VALIDATION_RULES.files.video.formats.join(', ')} | Maks: 120MB
                         </p>
                         <input
                           type="file"
                           accept={VALIDATION_RULES.files.video.formats.join(',')}
                           onChange={handleFileChange('video')}
                           disabled={loading}
-                          className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                          className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 sm:file:py-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
                         />
                       </div>
                     </div>
@@ -1056,10 +985,10 @@ export default function MaterialsPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         File Materi
                       </label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition-colors">
-                        <File className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600 mb-1">Upload file materi</p>
-                        <p className="text-xs text-gray-500 mb-2">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 sm:p-4 text-center hover:border-blue-500 transition-colors bg-gray-50">
+                        <File className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600 mb-1 break-words">Upload file materi</p>
+                        <p className="text-xs text-gray-500 mb-2 break-words">
                           Format: {VALIDATION_RULES.files.materialFile.formats.join(', ')} | Maks: 10MB
                         </p>
                         <input
@@ -1067,7 +996,7 @@ export default function MaterialsPage() {
                           accept={VALIDATION_RULES.files.materialFile.formats.join(',')}
                           onChange={handleFileChange('materialFile')}
                           disabled={loading}
-                          className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                          className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 sm:file:py-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
                         />
                       </div>
                     </div>
@@ -1077,10 +1006,10 @@ export default function MaterialsPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         File Ringkasan
                       </label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition-colors">
-                        <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600 mb-1">Upload file ringkasan</p>
-                        <p className="text-xs text-gray-500 mb-2">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 sm:p-4 text-center hover:border-blue-500 transition-colors bg-gray-50">
+                        <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600 mb-1 break-words">Upload file ringkasan</p>
+                        <p className="text-xs text-gray-500 mb-2 break-words">
                           Format: {VALIDATION_RULES.files.ringkasan.formats.join(', ')} | Maks: 10MB
                         </p>
                         <input
@@ -1088,7 +1017,7 @@ export default function MaterialsPage() {
                           accept={VALIDATION_RULES.files.ringkasan.formats.join(',')}
                           onChange={handleFileChange('ringkasan')}
                           disabled={loading}
-                          className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                          className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 sm:file:py-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
                         />
                       </div>
                     </div>
@@ -1098,10 +1027,10 @@ export default function MaterialsPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         File Template
                       </label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition-colors">
-                        <File className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600 mb-1">Upload file template</p>
-                        <p className="text-xs text-gray-500 mb-2">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 sm:p-4 text-center hover:border-blue-500 transition-colors bg-gray-50">
+                        <File className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600 mb-1 break-words">Upload file template</p>
+                        <p className="text-xs text-gray-500 mb-2 break-words">
                           Format: {VALIDATION_RULES.files.template.formats.join(', ')} | Maks: 10MB
                         </p>
                         <input
@@ -1109,7 +1038,7 @@ export default function MaterialsPage() {
                           accept={VALIDATION_RULES.files.template.formats.join(',')}
                           onChange={handleFileChange('template')}
                           disabled={loading}
-                          className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                          className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 sm:file:py-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
                         />
                       </div>
                     </div>
@@ -1119,10 +1048,10 @@ export default function MaterialsPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Thumbnail
                       </label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition-colors">
-                        <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600 mb-1">Upload thumbnail materi</p>
-                        <p className="text-xs text-gray-500 mb-2">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 sm:p-4 text-center hover:border-blue-500 transition-colors bg-gray-50">
+                        <ImageIcon className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600 mb-1 break-words">Upload thumbnail materi</p>
+                        <p className="text-xs text-gray-500 mb-2 break-words">
                           Format: {VALIDATION_RULES.files.thumnail.formats.join(', ')} | Maks: 5MB
                         </p>
                         <input
@@ -1130,7 +1059,7 @@ export default function MaterialsPage() {
                           accept={VALIDATION_RULES.files.thumnail.formats.join(',')}
                           onChange={handleFileChange('thumnail')}
                           disabled={loading}
-                          className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                          className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 sm:file:py-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
                         />
                       </div>
                     </div>
@@ -1138,7 +1067,7 @@ export default function MaterialsPage() {
                 </div>
 
                 {/* Modal Footer */}
-                <div className="flex gap-3 justify-end mt-8 pt-6 border-t border-gray-200">
+                <div className="flex gap-3 justify-end mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200">
                   <button
                     type="button"
                     onClick={() => {
@@ -1146,19 +1075,19 @@ export default function MaterialsPage() {
                       resetMaterialForm()
                     }}
                     disabled={loading}
-                    className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors font-medium disabled:opacity-50"
+                    className="px-4 sm:px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors font-medium disabled:opacity-50 text-sm sm:text-base"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
                     disabled={loading || materialForm.title.length < VALIDATION_RULES.title.minLength}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm sm:text-base hover:scale-105 active:scale-95 transition-all duration-200"
                   >
                     {loading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Menyimpan...
+                        <span className="text-sm sm:text-base">Menyimpan...</span>
                       </>
                     ) : (
                       editingMaterial ? 'Simpan Perubahan' : 'Buat Materi'
@@ -1176,12 +1105,12 @@ export default function MaterialsPage() {
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-6xl w-full max-h-[95vh] overflow-hidden flex flex-col border border-gray-200 shadow-2xl">
             {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-white">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">
+            <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200 bg-white">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 break-words">
                   Detail Materi
                 </h3>
-                <p className="text-gray-600 text-sm mt-1">
+                <p className="text-gray-600 text-sm mt-1 break-words">
                   Informasi lengkap tentang materi pembelajaran
                 </p>
               </div>
@@ -1190,30 +1119,32 @@ export default function MaterialsPage() {
                   setShowDetailModal(false)
                   setDetailMaterial(null)
                 }}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
             {/* Modal Body - Scrollable */}
             <div className="flex-1 overflow-y-auto">
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 {detailLoading ? (
                   <div className="flex justify-center items-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                     {/* Main Content */}
-                    <div className="lg:col-span-2 space-y-6">
-                      {/* Thumbnail */}
-                      {detailMaterial.thumnail_path && (
-                        <div className="rounded-lg overflow-hidden bg-gray-100">
-                          <img 
-                            src={detailMaterial.thumnail_path} 
+                    <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+                      {/* Thumbnail dengan Image Next.js */}
+                      {detailMaterial.thumnail_path && isValidImage(detailMaterial.thumnail_path) && (
+                        <div className="rounded-lg overflow-hidden bg-gray-100 relative h-48 sm:h-64">
+                          <Image
+                            src={getValidImageUrl(detailMaterial.thumnail_path)}
                             alt={detailMaterial.title}
-                            className="w-full h-48 object-cover"
+                            fill
+                            className="object-cover"
+                            priority
                           />
                         </div>
                       )}
@@ -1223,7 +1154,7 @@ export default function MaterialsPage() {
                         <div className="bg-black rounded-lg overflow-hidden">
                           <video 
                             controls 
-                            className="w-full h-auto max-h-96"
+                            className="w-full h-auto max-h-64 sm:max-h-96"
                             poster={detailMaterial.thumnail_path}
                           >
                             <source src={detailMaterial.video_path} type="video/mp4" />
@@ -1234,13 +1165,13 @@ export default function MaterialsPage() {
 
                       {/* Video External Link */}
                       {detailMaterial.video_path && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <Video className="w-5 h-5 text-blue-600" />
-                              <div>
-                                <p className="font-medium text-blue-900">Video Materi</p>
-                                <p className="text-sm text-blue-700">
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <Video className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-blue-900 text-sm sm:text-base break-words">Video Materi</p>
+                                <p className="text-sm text-blue-700 break-words">
                                   Buka video di tab baru jika mengalami masalah pemutaran
                                 </p>
                               </div>
@@ -1249,7 +1180,7 @@ export default function MaterialsPage() {
                               href={detailMaterial.video_path}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                              className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm sm:text-base w-full sm:w-auto justify-center hover:scale-105 active:scale-95 transition-all duration-200"
                             >
                               <ExternalLink className="w-4 h-4" />
                               Buka Video
@@ -1259,10 +1190,10 @@ export default function MaterialsPage() {
                       )}
 
                       {/* Content */}
-                      <div className="bg-white rounded-lg border border-gray-200 p-6">
-                        <h4 className="text-lg font-bold text-gray-900 mb-4">Deskripsi Materi</h4>
+                      <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                        <h4 className="text-lg font-bold text-gray-900 mb-3 sm:mb-4 break-words">Deskripsi Materi</h4>
                         <div className="prose max-w-none">
-                          <p className="text-gray-700 whitespace-pre-line">
+                          <p className="text-gray-700 whitespace-pre-line break-words text-sm sm:text-base">
                             {detailMaterial.content || 'Tidak ada deskripsi yang tersedia.'}
                           </p>
                         </div>
@@ -1270,51 +1201,22 @@ export default function MaterialsPage() {
                     </div>
 
                     {/* Sidebar - Info & Files */}
-                    <div className="space-y-6">
-                      {/* Basic Info */}
-                      {/* <div className="bg-white rounded-lg border border-gray-200 p-6">
-                        <h4 className="text-lg font-bold text-gray-900 mb-4">Informasi Materi</h4>
-                        <div className="space-y-3">
-                          <div>
-                            <p className="text-sm font-medium text-gray-500">Judul</p>
-                            <p className="text-gray-900 font-semibold">{detailMaterial.title}</p>
-                          </div>
-                          {detailMaterial.xp && (
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">XP</p>
-                              <p className="text-green-600 font-semibold">+{detailMaterial.xp} XP</p>
-                            </div>
-                          )}
-                          {detailMaterial.createdAt && (
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Dibuat</p>
-                              <p className="text-gray-700">{formatDate(detailMaterial.createdAt)}</p>
-                            </div>
-                          )}
-                          {detailMaterial.updatedAt && (
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Diperbarui</p>
-                              <p className="text-gray-700">{formatDate(detailMaterial.updatedAt)}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div> */}
-
+                    <div className="space-y-4 sm:space-y-6">
                       {/* File Attachments */}
-                      <div className="bg-white rounded-lg border border-gray-200 p-6">
-                        <h4 className="text-lg font-bold text-gray-900 mb-4">File Terlampir</h4>
+                      <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                        <h4 className="text-lg font-bold text-gray-900 mb-3 sm:mb-4 break-words">File Terlampir</h4>
                         <div className="space-y-3">
                           {detailMaterial.materialFilePath && (
                             <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                              <div className="flex items-center gap-2">
-                                <File className="w-4 h-4 text-green-600" />
-                                <span className="text-sm text-gray-700">File Materi</span>
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <File className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                <span className="text-sm text-gray-700 truncate">File Materi</span>
                               </div>
                               <a 
                                 href={detailMaterial.materialFilePath}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-green-600 hover:text-green-800 transition-colors"
+                                className="text-green-600 hover:text-green-800 transition-colors flex-shrink-0"
                                 title="Download File Materi"
                               >
                                 <Download className="w-4 h-4" />
@@ -1324,15 +1226,15 @@ export default function MaterialsPage() {
 
                           {detailMaterial.ringkasanPath && (
                             <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                              <div className="flex items-center gap-2">
-                                <FileText className="w-4 h-4 text-purple-600" />
-                                <span className="text-sm text-gray-700">Ringkasan</span>
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <FileText className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                                <span className="text-sm text-gray-700 truncate">Ringkasan</span>
                               </div>
                               <a 
                                 href={detailMaterial.ringkasanPath}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-purple-600 hover:text-purple-800 transition-colors"
+                                className="text-purple-600 hover:text-purple-800 transition-colors flex-shrink-0"
                                 title="Download Ringkasan"
                               >
                                 <Download className="w-4 h-4" />
@@ -1342,15 +1244,15 @@ export default function MaterialsPage() {
 
                           {detailMaterial.templatePath && (
                             <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                              <div className="flex items-center gap-2">
-                                <File className="w-4 h-4 text-orange-600" />
-                                <span className="text-sm text-gray-700">Template</span>
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <File className="w-4 h-4 text-orange-600 flex-shrink-0" />
+                                <span className="text-sm text-gray-700 truncate">Template</span>
                               </div>
                               <a 
                                 href={detailMaterial.templatePath}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-orange-600 hover:text-orange-800 transition-colors"
+                                className="text-orange-600 hover:text-orange-800 transition-colors flex-shrink-0"
                                 title="Download Template"
                               >
                                 <Download className="w-4 h-4" />
@@ -1359,7 +1261,7 @@ export default function MaterialsPage() {
                           )}
 
                           {!detailMaterial.materialFilePath && !detailMaterial.ringkasanPath && !detailMaterial.templatePath && (
-                            <p className="text-gray-500 text-sm text-center py-4">
+                            <p className="text-gray-500 text-sm text-center py-4 break-words">
                               Tidak ada file terlampir
                             </p>
                           )}
@@ -1367,15 +1269,15 @@ export default function MaterialsPage() {
                       </div>
 
                       {/* Actions */}
-                      <div className="bg-white rounded-lg border border-gray-200 p-6">
-                        <h4 className="text-lg font-bold text-gray-900 mb-4">Aksi</h4>
+                      <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                        <h4 className="text-lg font-bold text-gray-900 mb-3 sm:mb-4 break-words">Aksi</h4>
                         <div className="space-y-3">
                           <button
                             onClick={() => {
                               setShowDetailModal(false)
                               handleEditMaterial(detailMaterial)
                             }}
-                            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base hover:scale-105 active:scale-95 transition-all duration-200"
                           >
                             <Edit className="w-4 h-4" />
                             Edit Materi
@@ -1385,7 +1287,7 @@ export default function MaterialsPage() {
                               setShowDetailModal(false)
                               openDeleteConfirm(detailMaterial.id, detailMaterial.title)
                             }}
-                            className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                            className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base hover:scale-105 active:scale-95 transition-all duration-200"
                           >
                             <Trash2 className="w-4 h-4" />
                             Hapus Materi
@@ -1404,16 +1306,16 @@ export default function MaterialsPage() {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm.show && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full border border-gray-200 shadow-2xl">
-            <div className="p-6">
+          <div className="bg-white rounded-xl max-w-md w-full border border-gray-200 shadow-2xl mx-4">
+            <div className="p-4 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="bg-red-100 p-2 rounded-full">
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                  <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">Konfirmasi Hapus</h3>
+                <h3 className="text-lg font-bold text-gray-900 break-words">Konfirmasi Hapus</h3>
               </div>
               
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 mb-6 text-sm sm:text-base break-words">
                 Apakah Anda yakin ingin menghapus materi <span className="font-semibold text-gray-900">`{showDeleteConfirm.materialTitle}`</span>? Tindakan ini tidak dapat dibatalkan.
               </p>
 
@@ -1421,19 +1323,19 @@ export default function MaterialsPage() {
                 <button
                   onClick={() => setShowDeleteConfirm({ show: false, materialId: null, materialTitle: '' })}
                   disabled={loading}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors font-medium disabled:opacity-50"
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors font-medium disabled:opacity-50 text-sm sm:text-base"
                 >
                   Batal
                 </button>
                 <button
                   onClick={() => showDeleteConfirm.materialId && handleDeleteMaterial(showDeleteConfirm.materialId)}
                   disabled={loading}
-                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm sm:text-base hover:scale-105 active:scale-95 transition-all duration-200"
                 >
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Menghapus...
+                      <span className="text-sm sm:text-base">Menghapus...</span>
                     </>
                   ) : (
                     <>

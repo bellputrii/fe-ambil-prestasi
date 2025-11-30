@@ -479,18 +479,18 @@ const stats: Stat[] = [
   return (
     <>
       <LayoutNavbar>
-        {/* Success Message */}
+        {/* Success Message - Increased z-index to appear above modals */}
         {messageSuccess && (
-          <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 shadow-lg max-w-sm">
+          <div className="fixed top-4 right-4 z-[100] animate-in slide-in-from-right duration-300">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 shadow-lg max-w-sm mx-4">
               <div className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <div>
+                <div className="flex-1">
                   <p className="text-green-800 font-medium text-sm">{messageSuccess}</p>
                 </div>
                 <button 
                   onClick={() => setMessageSuccess(null)}
-                  className="text-green-600 hover:text-green-800 transition-colors"
+                  className="text-green-600 hover:text-green-800 transition-colors flex-shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -499,18 +499,18 @@ const stats: Stat[] = [
           </div>
         )}
 
-        {/* Error Message */}
+        {/* Error Message - Increased z-index to appear above modals */}
         {messageFailed && (
-          <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg max-w-sm">
+          <div className="fixed top-4 right-4 z-[100] animate-in slide-in-from-right duration-300">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg max-w-sm mx-4">
               <div className="flex items-center gap-3">
                 <XCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                <div>
+                <div className="flex-1">
                   <p className="text-red-800 font-medium text-sm">{messageFailed}</p>
                 </div>
                 <button 
                   onClick={() => setMessageFailed(null)}
-                  className="text-red-600 hover:text-red-800 transition-colors"
+                  className="text-red-600 hover:text-red-800 transition-colors flex-shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -537,7 +537,7 @@ const stats: Stat[] = [
                 {error.includes('login kembali') && (
                   <button 
                     onClick={() => router.push('/login')}
-                    className="mt-3 bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors"
+                    className="mt-3 bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors text-sm"
                   >
                     Login Kembali
                   </button>
@@ -555,6 +555,7 @@ const stats: Stat[] = [
                       alt={classData.name}
                       fill
                       className="object-cover"
+                      priority
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
@@ -564,10 +565,10 @@ const stats: Stat[] = [
                 </div>
 
                 {/* Class Info */}
-                <div className="lg:w-2/3 p-6 sm:p-8">
+                <div className="lg:w-2/3 p-4 sm:p-6 lg:p-8">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4">
-                    <div>
-                      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                    <div className="flex-1">
+                      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
                         {classData.name}
                       </h1>
                       <div className="flex flex-wrap gap-2 mb-4">
@@ -581,24 +582,24 @@ const stats: Stat[] = [
                     </div>
                   </div>
 
-                  <p className="text-gray-600 mb-6 leading-relaxed">
+                  <p className="text-gray-600 mb-6 leading-relaxed text-sm sm:text-base">
                     {classData.description}
                   </p>
 
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-4">
+                  {/* Stats - Improved mobile layout */}
+                  <div className="grid grid-cols-3 gap-3 sm:gap-4">
                     {stats.map((stat, index) => (
                       <div
                         key={index}
-                        className="bg-gray-50 rounded-lg p-4 text-center"
+                        className="bg-gray-50 rounded-lg p-3 sm:p-4 text-center"
                       >
-                        <div className="flex justify-center mb-2">
-                          <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
+                        <div className="flex justify-center mb-1 sm:mb-2">
+                          <div className="bg-blue-100 p-1.5 sm:p-2 rounded-lg text-blue-600">
                             {stat.icon}
                           </div>
                         </div>
-                        <h3 className="text-lg sm:text-xl font-bold text-gray-900">{stat.value}</h3>
-                        <p className="text-gray-600 text-sm">{stat.label}</p>
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900">{stat.value}</h3>
+                        <p className="text-gray-600 text-xs sm:text-sm">{stat.label}</p>
                       </div>
                     ))}
                   </div>
@@ -609,9 +610,9 @@ const stats: Stat[] = [
 
           {/* Sections Section */}
           <div className="max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+              <div className="flex-1">
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
                   Section & Materi
                 </h2>
                 <p className="text-gray-700 text-sm sm:text-base">
@@ -621,10 +622,10 @@ const stats: Stat[] = [
               <button 
                 onClick={handleCreateSection}
                 disabled={loading}
-                className="bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
               >
                 <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden sm:inline">Tambah Section</span>
+                <span>Tambah Section</span>
               </button>
             </div>
 
@@ -634,72 +635,81 @@ const stats: Stat[] = [
                 <p className="text-gray-600 mt-4">Memuat data section...</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {sections.map((section, index) => (
                   <div 
                     key={section.id}
-                    className="bg-white rounded-xl shadow-md border border-gray-200 transition-all duration-300 hover:shadow-lg"
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-blue-300 group"
                   >
-                    <div className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-start gap-4 flex-1">
-                          <div className="bg-blue-100 text-blue-600 rounded-lg p-3 mt-1">
-                            <List className="w-5 h-5" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="text-lg font-bold text-gray-900 mb-2">
-                              {section.title}
-                            </h3>
-                            {section.description && (
-                              <p className="text-gray-600 text-sm mb-3">
-                                {section.description}
-                              </p>
-                            )}
-                            <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-                              <span className="flex items-center gap-1">
-                                <FileText className="w-4 h-4" />
-                                {section.Material?.length || 0} Materi
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <BookOpen className="w-4 h-4" />
-                                {section.Quiz?.length || 0} Quiz
-                              </span>
-                              <span>Urutan: {section.order}</span>
-                            </div>
-                          </div>
-                        </div>
+                    {/* Section Header dengan Icon */}
+                    <div className="relative h-32 w-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                      <List className="w-12 h-12 text-white opacity-90" />
+                      
+                      {/* Order Badge */}
+                      <div className="absolute top-3 left-3">
+                        <span className="bg-white text-blue-600 text-xs px-2 py-1 rounded-full font-medium">
+                          #{section.order}
+                        </span>
+                      </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex gap-2 ml-4">
-                          <button 
-                            onClick={() => handleEditSection(section)}
-                            disabled={loading}
-                            className="bg-blue-500 text-white p-2 rounded-lg transition-all duration-300 hover:bg-blue-600 hover:scale-105 active:scale-95 disabled:opacity-50"
-                            title="Edit Section"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => openDeleteConfirm(section.id, section.title)}
-                            disabled={loading}
-                            className="bg-red-500 text-white p-2 rounded-lg transition-all duration-300 hover:bg-red-600 hover:scale-105 active:scale-95 disabled:opacity-50"
-                            title="Hapus Section"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                      {/* Materials & Quizzes Badge */}
+                      <div className="absolute top-3 right-3">
+                        <span className="bg-white/20 text-white text-xs px-2 py-1 rounded-full font-medium backdrop-blur-sm">
+                          {section.Material?.length || 0} Materi
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="p-5">
+                      <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-700 transition-colors">
+                        {section.title}
+                      </h3>
+                      
+                      {section.description && (
+                        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                          {section.description}
+                        </p>
+                      )}
+
+                      {/* Section Stats */}
+                      <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
+                        <div className="flex items-center gap-1">
+                          <FileText className="w-4 h-4 text-blue-500" />
+                          <span className="font-medium">{section.Material?.length || 0}</span>
+                          <span className="text-gray-500">Materi</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Award className="w-4 h-4 text-green-500" />
+                          <span className="font-medium">{section.Quiz?.length || 0}</span>
+                          <span className="text-gray-500">Quiz</span>
                         </div>
                       </div>
 
-                      {/* Quick Actions */}
-                      <div className="flex gap-3 pt-4 border-t border-gray-100">
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
                         <button 
                           onClick={() => router.push(`/classes/${classId}/sections/${section.id}/materials`)}
-                          className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-blue-500 hover:text-white hover:scale-105 active:scale-95 flex items-center justify-center gap-2 group"
+                          className="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-blue-600 active:scale-95 flex items-center justify-center gap-2"
                         >
                           <File className="w-4 h-4" />
-                          Kelola Materi
+                          Kelola
                         </button>
-  
+                        <button 
+                          onClick={() => handleEditSection(section)}
+                          disabled={loading}
+                          className="bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-gray-200 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Edit Section"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => openDeleteConfirm(section.id, section.title)}
+                          disabled={loading}
+                          className="bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-red-500 hover:text-white active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Hapus Section"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -709,9 +719,9 @@ const stats: Stat[] = [
 
             {sections.length === 0 && !loading && (
               <div className="text-center py-12">
-                <List className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <List className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada section</h3>
-                <p className="text-gray-500 mb-4">Mulai dengan membuat section pertama untuk kelas ini</p>
+                <p className="text-gray-500 mb-4 text-sm sm:text-base">Mulai dengan membuat section pertama untuk kelas ini</p>
                 <button 
                   onClick={handleCreateSection}
                   disabled={loading}
@@ -730,10 +740,10 @@ const stats: Stat[] = [
       {/* Create/Edit Section Modal */}
       {showSectionModal && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-gray-200 shadow-2xl">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-gray-200 shadow-2xl mx-auto">
             {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-white">
-              <h3 className="text-xl font-bold text-gray-900">
+            <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200 bg-white flex-shrink-0">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                 {editingSection ? 'Edit Section' : 'Tambah Section Baru'}
               </h3>
               <button 
@@ -741,17 +751,17 @@ const stats: Stat[] = [
                   setShowSectionModal(false)
                   resetSectionForm()
                 }}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
                 disabled={loading}
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
             {/* Modal Body - Scrollable */}
             <div className="flex-1 overflow-y-auto">
-              <form onSubmit={handleSubmitSection} className="p-6">
-                <div className="space-y-6">
+              <form onSubmit={handleSubmitSection} className="p-4 sm:p-6">
+                <div className="space-y-4 sm:space-y-6">
                   {/* Title Input */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -764,7 +774,7 @@ const stats: Stat[] = [
                       value={sectionForm.title}
                       onChange={handleSectionInputChange}
                       disabled={loading}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white text-sm sm:text-base"
                       placeholder="Masukkan judul section"
                     />
                   </div>
@@ -780,14 +790,14 @@ const stats: Stat[] = [
                       onChange={handleSectionInputChange}
                       rows={4}
                       disabled={loading}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 resize-none disabled:opacity-50 bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 resize-none disabled:opacity-50 bg-white text-sm sm:text-base"
                       placeholder="Deskripsi singkat tentang section (opsional)"
                     />
                   </div>
                 </div>
 
                 {/* Modal Footer */}
-                <div className="flex gap-3 justify-end mt-8 pt-6 border-t border-gray-200">
+                <div className="flex gap-3 justify-end mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200 flex-shrink-0">
                   <button
                     type="button"
                     onClick={() => {
@@ -795,14 +805,14 @@ const stats: Stat[] = [
                       resetSectionForm()
                     }}
                     disabled={loading}
-                    className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors font-medium disabled:opacity-50"
+                    className="px-4 sm:px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors font-medium disabled:opacity-50 text-sm sm:text-base"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm sm:text-base"
                   >
                     {loading ? (
                       <>
@@ -823,16 +833,16 @@ const stats: Stat[] = [
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm.show && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full border border-gray-200 shadow-2xl">
-            <div className="p-6">
+          <div className="bg-white rounded-xl max-w-md w-full border border-gray-200 shadow-2xl mx-4 sm:mx-auto">
+            <div className="p-4 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="bg-red-100 p-2 rounded-full">
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                  <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
                 </div>
                 <h3 className="text-lg font-bold text-gray-900">Konfirmasi Hapus</h3>
               </div>
               
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 mb-6 text-sm sm:text-base">
                 Apakah Anda yakin ingin menghapus section <span className="font-semibold text-gray-900">`{showDeleteConfirm.sectionTitle}`</span>? Tindakan ini tidak dapat dibatalkan.
               </p>
 
@@ -840,14 +850,14 @@ const stats: Stat[] = [
                 <button
                   onClick={() => setShowDeleteConfirm({ show: false, sectionId: null, sectionTitle: '' })}
                   disabled={loading}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors font-medium disabled:opacity-50"
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors font-medium disabled:opacity-50 text-sm sm:text-base"
                 >
                   Batal
                 </button>
                 <button
                   onClick={() => showDeleteConfirm.sectionId && handleDeleteSection(showDeleteConfirm.sectionId)}
                   disabled={loading}
-                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm sm:text-base"
                 >
                   {loading ? (
                     <>

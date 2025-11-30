@@ -79,10 +79,10 @@ export default function RedeemCodePage() {
   // Usage status helper (label + badge color)
   const getRedeemStatus = (code: RedeemCode) => {
     const expired = code.expiresAt ? new Date(code.expiresAt) < new Date() : false
-    if (expired) return { label: 'Kadaluarsa', badge: 'bg-gray-100 text-gray-800' }
-    if (code.usedCount === 0) return { label: 'Belum Terpakai', badge: 'bg-blue-100 text-blue-800' }
-    if (code.usedCount < code.maxUses) return { label: 'Sebagian digunakan', badge: 'bg-yellow-100 text-yellow-800' }
-    return { label: 'Terpakai', badge: 'bg-red-100 text-red-800' }
+    if (expired) return { label: 'Kadaluarsa', badge: 'bg-gray-100 text-gray-800 border border-gray-300' }
+    if (code.usedCount === 0) return { label: 'Belum Terpakai', badge: 'bg-blue-100 text-blue-800 border border-blue-200' }
+    if (code.usedCount < code.maxUses) return { label: 'Sebagian digunakan', badge: 'bg-yellow-100 text-yellow-800 border border-yellow-200' }
+    return { label: 'Terpakai', badge: 'bg-red-100 text-red-800 border border-red-200' }
   }
 
   // Stats calculation
@@ -90,19 +90,19 @@ export default function RedeemCodePage() {
     { 
       value: redeemCodes.length.toString(), 
       label: 'Total Kode', 
-      icon: <Ticket className="w-5 h-5" />,
+      icon: <Ticket className="w-4 h-4" />,
       color: 'bg-purple-500'
     },
     { 
       value: redeemCodes.filter(code => isCodeActive(code)).length.toString(), 
       label: 'Kode Aktif', 
-      icon: <CheckCircle className="w-5 h-5" />,
+      icon: <CheckCircle className="w-4 h-4" />,
       color: 'bg-green-500'
     },
     { 
       value: redeemCodes.reduce((sum, code) => sum + code.usedCount, 0).toString(), 
       label: 'Total Ditukar', 
-      icon: <CheckCircle2 className="w-5 h-5" />,
+      icon: <CheckCircle2 className="w-4 h-4" />,
       color: 'bg-blue-500'
     },
   ]
@@ -417,71 +417,75 @@ export default function RedeemCodePage() {
         <div className="min-h-screen bg-gray-50 pt-16">
           {/* Header Section */}
           <div className="bg-white border-b border-gray-200">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                <div>
+            <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
                   <button
                     onClick={() => router.back()}
-                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 transition-colors"
+                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
                   >
                     <ArrowLeft className="w-4 h-4" />
-                    <span className="text-sm">Kembali ke Dashboard</span>
+                    <span className="text-sm">Kembali</span>
                   </button>
-                  <h1 className="text-xl md:text-2xl font-bold text-gray-900">Kelola Redeem Code</h1>
+                  <button 
+                    onClick={handleCreateCode}
+                    disabled={loading}
+                    className="bg-purple-600 text-white px-3 py-2 rounded-lg font-semibold transition-colors hover:bg-purple-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span className="hidden sm:inline">Buat Kode Baru</span>
+                    <span className="sm:hidden">Baru</span>
+                  </button>
+                </div>
+                
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">Kelola Redeem Code</h1>
                   <p className="text-gray-600 text-sm mt-1">Buat dan kelola kode redeem untuk akses kelas premium</p>
                 </div>
-                <button 
-                  onClick={handleCreateCode}
-                  disabled={loading}
-                  className="bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors hover:bg-purple-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-auto justify-center text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  Buat Kode Baru
-                </button>
-              </div>
 
-              {/* Error State */}
-              {error && !loading && (
-                <div className="mt-3 bg-yellow-500 border border-yellow-600 rounded-lg p-3">
-                  <p className="text-white font-medium text-sm">{error}</p>
-                  {error.includes('login kembali') && (
-                    <button 
-                      onClick={() => router.push('/auth/login')}
-                      className="mt-2 bg-white text-yellow-600 px-3 py-1 rounded text-sm hover:bg-gray-100 transition-colors"
+                {/* Error State */}
+                {error && !loading && (
+                  <div className="bg-yellow-500 border border-yellow-600 rounded-lg p-3">
+                    <p className="text-white font-medium text-sm">{error}</p>
+                    {error.includes('login kembali') && (
+                      <button 
+                        onClick={() => router.push('/auth/login')}
+                        className="mt-2 bg-white text-yellow-600 px-3 py-1 rounded text-sm hover:bg-gray-100 transition-colors"
+                      >
+                        Login Kembali
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Stats Cards */}
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  {stats.map((stat, index) => (
+                    <div
+                      key={index}
+                      className="bg-white rounded-lg p-2 border border-gray-200 shadow-sm"
                     >
-                      Login Kembali
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Stats Cards */}
-              <div className="grid grid-cols-3 gap-3 mt-4">
-                {stats.map((stat, index) => (
-                  <div
-                    key={index}
-                    className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className={`p-2 rounded-lg text-white ${stat.color}`}>
-                        {stat.icon}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-900">{stat.value}</h3>
-                        <p className="text-gray-600 text-xs">{stat.label}</p>
+                      <div className="flex items-center gap-2">
+                        <div className={`p-1.5 rounded-lg text-white ${stat.color}`}>
+                          {stat.icon}
+                        </div>
+                        <div>
+                          <h3 className="text-base font-bold text-gray-900">{stat.value}</h3>
+                          <p className="text-gray-600 text-xs">{stat.label}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Main Content */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4">
             {/* Search Section */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div className="bg-white rounded-lg border border-gray-200 p-3 mb-4">
+              <div className="flex flex-col gap-3">
                 {/* Search Bar */}
                 <div className="flex-1">
                   <div className="relative">
@@ -497,141 +501,232 @@ export default function RedeemCodePage() {
                 </div>
 
                 {/* Search Info */}
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center justify-between text-sm text-gray-600">
                   <span>Menampilkan:</span>
                   <span className="font-medium">
                     {searchTerm 
-                      ? `Hasil pencarian "${searchTerm}" (${filteredCodes.length})` 
-                      : `Semua Kode (${filteredCodes.length})`
+                      ? `${filteredCodes.length} hasil` 
+                      : `${filteredCodes.length} kode`
                     }
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Redeem Codes Table */}
+            {/* Redeem Codes - Mobile Card View */}
             {loading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
                 <p className="text-gray-600 mt-2 text-sm">Memuat data redeem code...</p>
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Kode
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Durasi (Hari)
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Penggunaan
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Expires At
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Created At
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredCodes.map((redeemCode) => {
-                      const status = getRedeemStatus(redeemCode)
-                      return (
-                        <tr key={redeemCode.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <div className="text-sm font-mono font-medium text-gray-900">
-                                {redeemCode.code}
-                              </div>
-                              <button
-                                onClick={() => copyToClipboard(redeemCode.code)}
-                                className="text-gray-400 hover:text-gray-600 transition-colors"
-                                disabled={loading}
-                              >
-                                {copiedCode === redeemCode.code ? (
-                                  <CheckCircle2 className="w-4 h-4 text-green-500" />
-                                ) : (
-                                  <Copy className="w-4 h-4" />
-                                )}
-                              </button>
+              <div>
+                {/* Mobile Card View */}
+                <div className="lg:hidden space-y-3">
+                  {filteredCodes.map((redeemCode) => {
+                    const status = getRedeemStatus(redeemCode)
+                    return (
+                      <div key={redeemCode.id} className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                        {/* Header */}
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="font-mono font-bold text-gray-900 text-base">
+                              {redeemCode.code}
                             </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.badge}`}>
-                              {status.label}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{redeemCode.durationDays}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
-                              {redeemCode.usedCount} / {redeemCode.maxUses}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
+                            <button
+                              onClick={() => copyToClipboard(redeemCode.code)}
+                              className="text-gray-400 hover:text-gray-600 transition-colors"
+                              disabled={loading}
+                            >
+                              {copiedCode === redeemCode.code ? (
+                                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                              ) : (
+                                <Copy className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                          <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${status.badge}`}>
+                            {status.label}
+                          </div>
+                        </div>
+
+                        {/* Details */}
+                        <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+                          <div>
+                            <span className="text-gray-500">Durasi:</span>
+                            <div className="font-medium text-gray-900">{redeemCode.durationDays} hari</div>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Penggunaan:</span>
+                            <div className="font-medium text-gray-900">{redeemCode.usedCount}/{redeemCode.maxUses}</div>
+                          </div>
+                          <div className="col-span-2">
+                            <span className="text-gray-500">Kadaluarsa:</span>
+                            <div className="font-medium text-gray-900">
                               {redeemCode.expiresAt 
                                 ? new Date(redeemCode.expiresAt).toLocaleDateString('id-ID', {
                                     year: 'numeric',
                                     month: 'short',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
+                                    day: 'numeric'
                                   })
                                 : 'Tidak ada'
                               }
                             </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
+                          </div>
+                          <div className="col-span-2">
+                            <span className="text-gray-500">Dibuat:</span>
+                            <div className="font-medium text-gray-900">
                               {new Date(redeemCode.createdAt).toLocaleDateString('id-ID', {
                                 year: 'numeric',
                                 month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
+                                day: 'numeric'
                               })}
                             </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => handleEditCode(redeemCode)}
-                                disabled={loading}
-                                className="bg-blue-500 text-white py-1 px-3 rounded text-xs font-medium transition-colors hover:bg-blue-600 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                <Edit className="w-3 h-3" />
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => openDeleteConfirm(redeemCode.id, redeemCode.code)}
-                                disabled={loading}
-                                className="bg-gray-100 text-gray-700 py-1 px-3 rounded text-xs font-medium transition-colors hover:bg-red-500 hover:text-white flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2 pt-3 border-t border-gray-100">
+                          <button
+                            onClick={() => handleEditCode(redeemCode)}
+                            disabled={loading}
+                            className="flex-1 bg-blue-500 text-white py-2 px-3 rounded text-xs font-medium transition-colors hover:bg-blue-600 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Edit className="w-3 h-3" />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => openDeleteConfirm(redeemCode.id, redeemCode.code)}
+                            disabled={loading}
+                            className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded text-xs font-medium transition-colors hover:bg-red-500 hover:text-white flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Hapus
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Kode
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Durasi (Hari)
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Penggunaan
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Expires At
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Created At
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredCodes.map((redeemCode) => {
+                        const status = getRedeemStatus(redeemCode)
+                        return (
+                          <tr key={redeemCode.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <div className="text-sm font-mono font-medium text-gray-900">
+                                  {redeemCode.code}
+                                </div>
+                                <button
+                                  onClick={() => copyToClipboard(redeemCode.code)}
+                                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                                  disabled={loading}
+                                >
+                                  {copiedCode === redeemCode.code ? (
+                                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                  ) : (
+                                    <Copy className="w-4 h-4" />
+                                  )}
+                                </button>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.badge}`}>
+                                {status.label}
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">{redeemCode.durationDays}</div>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">
+                                {redeemCode.usedCount} / {redeemCode.maxUses}
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">
+                                {redeemCode.expiresAt 
+                                  ? new Date(redeemCode.expiresAt).toLocaleDateString('id-ID', {
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })
+                                  : 'Tidak ada'
+                                }
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">
+                                {new Date(redeemCode.createdAt).toLocaleDateString('id-ID', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEditCode(redeemCode)}
+                                  disabled={loading}
+                                  className="bg-blue-500 text-white py-1 px-3 rounded text-xs font-medium transition-colors hover:bg-blue-600 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  <Edit className="w-3 h-3" />
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => openDeleteConfirm(redeemCode.id, redeemCode.code)}
+                                  disabled={loading}
+                                  className="bg-gray-100 text-gray-700 py-1 px-3 rounded text-xs font-medium transition-colors hover:bg-red-500 hover:text-white flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
 
                 {/* Empty State */}
                 {filteredCodes.length === 0 && !loading && (
-                  <div className="text-center py-8">
+                  <div className="text-center py-8 bg-white rounded-lg border border-gray-200">
                     <Ticket className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                     <h3 className="text-base font-medium text-gray-900 mb-1">
                       {searchTerm ? 'Kode redeem tidak ditemukan' : 'Belum ada kode redeem'}
@@ -663,7 +758,7 @@ export default function RedeemCodePage() {
 
       {/* Create/Edit Redeem Code Modal - DIPERBARUI dengan field expiresAt */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3">
           <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col border border-gray-200 shadow-lg">
             <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-white">
               <h3 className="text-lg font-bold text-gray-900">
@@ -831,7 +926,7 @@ export default function RedeemCodePage() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm.show && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3">
           <div className="bg-white rounded-lg max-w-sm w-full border border-gray-200 shadow-lg">
             <div className="p-4">
               <div className="flex items-center gap-3 mb-3">

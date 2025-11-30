@@ -60,53 +60,67 @@ export default function EMentoringPage() {
     { id: 'design', name: 'Desain' }
   ]
 
-  // Token statis yang diberikan
-  const STATIC_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiODU4NzdhZWItNzBiZS00Y2UyLTg1OTQtNmUzMTVhMjI4NWRkIiwiaWF0IjoxNzYzNzc0Mjk3LCJleHAiOjE3NjM4NjA2OTd9.tR_quLOZj-NH9LvsQHm_KgqoN13JnSTsLHPgc9bsqnk"
-
   // Fetch data mentors dari API tanpa perlu login
   useEffect(() => {
     const fetchMentors = async () => {
       try {
         setLoading(true)
+        setError(null)
 
-        const response = await fetch("https://api.damarjatiam.my.id/api/v1/public/teachers", {
+        console.log('Fetching mentors from API...')
+        
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/teachers`, {
           method: "GET",
           headers: {
-            "Authorization": `Bearer ${STATIC_TOKEN}`,
+            'Content-Type': 'application/json',
           },
         })
 
+        console.log('Response status:', response.status)
+        
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
         
         const result: ApiResponse = await response.json()
+        console.log('API Response:', result)
         
-        if (result.success && result.data) {
-          const transformedMentors = result.data.map((teacher, index) => ({
-            id: teacher.id,
-            name: teacher.name,
-            field: mapField(teacher.specialization),
-            specialization: teacher.specialization || 'Pendidikan Umum',
-            image: teacher.profileImage || '/person1.png',
-            rating: parseFloat((4.5 + Math.random() * 0.5).toFixed(1)),
-            sessions: Math.floor(Math.random() * 200) + 50,
-            experience: `${Math.floor(Math.random() * 10) + 5}+ tahun`,
-            category: mapCategory(teacher.specialization),
-            featured: index < 2,
-            bio: teacher.bio || 'Mentor berpengalaman di bidang pendidikan dengan komitmen untuk membantu siswa mencapai potensi terbaik mereka.',
-            email: teacher.email,
-            telp: teacher.telp
-          }))
+        if (result.success && result.data && Array.isArray(result.data)) {
+          console.log('Transforming mentors data...')
+          
+          const transformedMentors = result.data.map((teacher, index) => {
+            // Handle kemungkinan null values
+            const specialization = teacher.specialization || 'General'
+            const profileImage = teacher.profileImage || '/person1.png'
+            const bio = teacher.bio || 'Mentor berpengalaman di bidang pendidikan dengan komitmen untuk membantu siswa mencapai potensi terbaik mereka.'
+            
+            return {
+              id: teacher.id,
+              name: teacher.name,
+              field: mapField(specialization),
+              specialization: specialization,
+              image: profileImage,
+              rating: parseFloat((4.5 + Math.random() * 0.5).toFixed(1)),
+              sessions: Math.floor(Math.random() * 200) + 50,
+              experience: `${Math.floor(Math.random() * 10) + 5}+ tahun`,
+              category: mapCategory(specialization),
+              featured: index < 2, // Jadikan 2 mentor pertama sebagai featured
+              bio: bio,
+              email: teacher.email,
+              telp: teacher.telp
+            }
+          })
 
+          console.log('Transformed mentors:', transformedMentors)
           setMentors(transformedMentors)
-          setError(null)
         } else {
-          throw new Error(result.message || 'Gagal memuat data mentor')
+          console.warn('API response structure unexpected:', result)
+          throw new Error(result.message || 'Struktur data mentor tidak sesuai')
         }
       } catch (err) {
         console.error('Error fetching mentors:', err)
         setError('Gagal memuat data mentor. Silakan coba lagi.')
+        // Fallback ke data sample jika API gagal
         setMentors(getFallbackMentors())
       } finally {
         setLoading(false)
@@ -116,7 +130,7 @@ export default function EMentoringPage() {
     fetchMentors()
   }, [])
 
-  const mapField = (specialization: string | null): string => {
+  const mapField = (specialization: string): string => {
     if (!specialization) return 'Pendidikan Umum'
     
     const fieldMap: { [key: string]: string } = {
@@ -129,12 +143,15 @@ export default function EMentoringPage() {
       'technology': 'Teknologi & Business Plan',
       'business': 'Bisnis & Business Plan',
       'research': 'Penelitian & Analisis',
-      'design': 'Desain Kreatif'
+      'design': 'Desain Kreatif',
+      'general': 'Pendidikan Umum'
     }
-    return fieldMap[specialization.toLowerCase()] || 'Pendidikan Umum'
+    
+    const key = specialization.toLowerCase()
+    return fieldMap[key] || 'Pendidikan Umum'
   }
 
-  const mapCategory = (specialization: string | null): string => {
+  const mapCategory = (specialization: string): string => {
     if (!specialization) return 'essay'
     
     const categoryMap: { [key: string]: string } = {
@@ -147,9 +164,12 @@ export default function EMentoringPage() {
       'technology': 'business',
       'business': 'business',
       'research': 'research',
-      'design': 'design'
+      'design': 'design',
+      'general': 'essay'
     }
-    return categoryMap[specialization.toLowerCase()] || 'essay'
+    
+    const key = specialization.toLowerCase()
+    return categoryMap[key] || 'essay'
   }
 
   const getFallbackMentors = (): Mentor[] => [
@@ -213,8 +233,6 @@ export default function EMentoringPage() {
       description: "Belajar kapan saja dan di mana saja selama periode berlangganan"
     }
   ]
-
-  // GANTI VARIABLE PLANS PADA KEDUA HALAMAN DENGAN INI:
 
   const plans = [
     {
