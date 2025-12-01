@@ -689,7 +689,7 @@ export default function LoginPage() {
                 </label>
                 <button
                   type="button"
-                  onClick={() => router.push('/forgot-password')}
+                  onClick={() => router.push('/auth/forgot-password')}
                   className="text-[#0041A3] hover:text-blue-800 transition-colors font-medium"
                   disabled={status === "loading"}
                 >

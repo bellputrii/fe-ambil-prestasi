@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -93,6 +92,15 @@ export default function MaterialsPage() {
     thumnail?: File | null;
   }>({})
   
+  // State untuk file previews
+  const [filePreviews, setFilePreviews] = useState<{
+    video?: string;
+    materialFile?: { url: string; name: string; type: string };
+    ringkasan?: { url: string; name: string; type: string };
+    template?: { url: string; name: string; type: string };
+    thumnail?: string;
+  }>({})
+  
   // State untuk message feedback dengan z-[100]
   const [messageSuccess, setMessageSuccess] = useState<string | null>(null)
   const [messageFailed, setMessageFailed] = useState<string | null>(null)
@@ -114,9 +122,9 @@ export default function MaterialsPage() {
       maxLength: 200
     },
     files: {
-      maxSize: 10 * 1024 * 1024, // 10MB
+      maxSize: 200 * 1024 * 1024, // 200MB
       video: {
-        maxSize: 120 * 1024 * 1024, // 120MB untuk video
+        maxSize: 1024 * 1024 * 1024, // 1GB untuk video
         formats: ['.mp4', '.mov', '.avi', '.mkv']
       },
       materialFile: {
@@ -145,6 +153,19 @@ export default function MaterialsPage() {
       return () => clearTimeout(timer)
     }
   }, [messageSuccess, messageFailed])
+
+  // Cleanup URL objects ketika komponen unmount
+  useEffect(() => {
+    return () => {
+      Object.values(filePreviews).forEach(preview => {
+        if (typeof preview === 'string') {
+          URL.revokeObjectURL(preview)
+        } else if (preview && typeof preview === 'object' && preview.url) {
+          URL.revokeObjectURL(preview.url)
+        }
+      })
+    }
+  }, [filePreviews])
 
   // Fetch section data
   const fetchSectionData = async () => {
@@ -351,7 +372,7 @@ export default function MaterialsPage() {
     }))
   }
 
-  // Handle file changes dengan validasi
+  // Handle file changes dengan validasi dan preview
   const handleFileChange = (fieldName: keyof typeof files) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     
@@ -412,12 +433,54 @@ export default function MaterialsPage() {
         e.target.value = ''
         return
       }
+
+      // Create preview
+      const previewUrl = URL.createObjectURL(file)
+      
+      if (fieldName === 'video') {
+        setFilePreviews(prev => ({ ...prev, video: previewUrl }))
+      } else if (fieldName === 'thumnail') {
+        setFilePreviews(prev => ({ ...prev, thumnail: previewUrl }))
+      } else {
+        setFilePreviews(prev => ({ 
+          ...prev, 
+          [fieldName]: {
+            url: previewUrl,
+            name: file.name,
+            type: file.type
+          }
+        }))
+      }
     }
 
     setFiles(prev => ({
       ...prev,
       [fieldName]: file || null
     }))
+  }
+
+  // Fungsi untuk remove file dan preview
+  const handleRemoveFile = (fieldName: keyof typeof files) => {
+    // Clean up URL object
+    if (fieldName === 'video' && filePreviews.video) {
+      URL.revokeObjectURL(filePreviews.video)
+    } else if (fieldName === 'thumnail' && filePreviews.thumnail) {
+      URL.revokeObjectURL(filePreviews.thumnail)
+    } else if (filePreviews[fieldName as keyof typeof filePreviews]) {
+      const filePreview = filePreviews[fieldName as keyof typeof filePreviews] as { url: string } | undefined
+      if (filePreview?.url) {
+        URL.revokeObjectURL(filePreview.url)
+      }
+    }
+
+    setFiles(prev => ({ ...prev, [fieldName]: null }))
+    setFilePreviews(prev => ({ ...prev, [fieldName]: undefined }))
+    
+    // Reset input file
+    const fileInput = document.querySelector(`input[type="file"][name="${fieldName}"]`) as HTMLInputElement
+    if (fileInput) {
+      fileInput.value = ''
+    }
   }
 
   // Reset material form
@@ -428,6 +491,16 @@ export default function MaterialsPage() {
     })
     setFiles({})
     setEditingMaterial(null)
+    
+    // Clean up all preview URLs
+    Object.values(filePreviews).forEach(preview => {
+      if (typeof preview === 'string') {
+        URL.revokeObjectURL(preview)
+      } else if (preview && typeof preview === 'object' && preview.url) {
+        URL.revokeObjectURL(preview.url)
+      }
+    })
+    setFilePreviews({})
   }
 
   // Open create material modal
@@ -446,7 +519,7 @@ export default function MaterialsPage() {
     setShowMaterialModal(true)
   }
 
-  // Submit material form (create atau update)
+  // Submit material form (create atau update) - Semua file kecuali thumbnail adalah optional
   const handleSubmitMaterial = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -481,6 +554,7 @@ export default function MaterialsPage() {
         formData.append('title', materialForm.title.trim())
         formData.append('content', materialForm.content.trim())
 
+        // Hanya tambahkan file jika ada (semua file optional)
         if (files.video) formData.append('video', files.video)
         if (files.materialFile) formData.append('materialFile', files.materialFile)
         if (files.ringkasan) formData.append('ringkasan', files.ringkasan)
@@ -521,6 +595,7 @@ export default function MaterialsPage() {
         formData.append('title', materialForm.title.trim())
         formData.append('content', materialForm.content.trim())
 
+        // Hanya tambahkan file jika ada (semua file optional)
         if (files.video) formData.append('video', files.video)
         if (files.materialFile) formData.append('materialFile', files.materialFile)
         if (files.ringkasan) formData.append('ringkasan', files.ringkasan)
@@ -886,7 +961,7 @@ export default function MaterialsPage() {
       </LayoutNavbar>
       <Footer/>
 
-      {/* Create/Edit Material Modal dengan standar yang ditentukan */}
+      {/* Create/Edit Material Modal dengan file preview */}
       {showMaterialModal && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-gray-200 shadow-2xl">
@@ -957,110 +1032,232 @@ export default function MaterialsPage() {
                     />
                   </div>
 
-                  {/* File Uploads - Grid responsif */}
+                  {/* File Uploads - Grid responsif dengan Preview */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                    {/* Video Upload */}
+                    {/* Video Upload dengan Preview */}
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Video Materi
+                        Video Materi (optional)
                       </label>
                       <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 sm:p-4 text-center hover:border-blue-500 transition-colors bg-gray-50">
-                        <Video className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600 mb-1 break-words">Upload video materi</p>
-                        <p className="text-xs text-gray-500 mb-2 break-words">
-                          Format: {VALIDATION_RULES.files.video.formats.join(', ')} | Maks: 120MB
-                        </p>
-                        <input
-                          type="file"
-                          accept={VALIDATION_RULES.files.video.formats.join(',')}
-                          onChange={handleFileChange('video')}
-                          disabled={loading}
-                          className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 sm:file:py-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
-                        />
+                        {filePreviews.video ? (
+                          <div className="space-y-3">
+                            <div className="bg-black rounded-lg overflow-hidden">
+                              <video 
+                                controls 
+                                className="w-full h-32 object-cover"
+                                src={filePreviews.video}
+                              >
+                                Browser Anda tidak mendukung pemutar video.
+                              </video>
+                            </div>
+                            <div className="flex items-center justify-between bg-blue-50 rounded-lg p-2">
+                              <span className="text-sm text-blue-700 truncate flex-1">
+                                Video dipilih
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveFile('video')}
+                                className="text-red-600 hover:text-red-800 transition-colors ml-2"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <Video className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-600 mb-1 break-words">Upload video materi (opsional)</p>
+                            <p className="text-xs text-gray-500 mb-2 break-words">
+                              Format: {VALIDATION_RULES.files.video.formats.join(', ')} | Maks: 1GB
+                            </p>
+                            <input
+                              type="file"
+                              accept={VALIDATION_RULES.files.video.formats.join(',')}
+                              onChange={handleFileChange('video')}
+                              disabled={loading}
+                              className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 sm:file:py-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
+                            />
+                          </>
+                        )}
                       </div>
                     </div>
 
-                    {/* Material File Upload */}
+                    {/* Material File Upload dengan Preview */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        File Materi
+                        File Materi (optional)
                       </label>
                       <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 sm:p-4 text-center hover:border-blue-500 transition-colors bg-gray-50">
-                        <File className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600 mb-1 break-words">Upload file materi</p>
-                        <p className="text-xs text-gray-500 mb-2 break-words">
-                          Format: {VALIDATION_RULES.files.materialFile.formats.join(', ')} | Maks: 10MB
-                        </p>
-                        <input
-                          type="file"
-                          accept={VALIDATION_RULES.files.materialFile.formats.join(',')}
-                          onChange={handleFileChange('materialFile')}
-                          disabled={loading}
-                          className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 sm:file:py-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
-                        />
+                        {filePreviews.materialFile ? (
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-center bg-gray-100 rounded-lg p-4">
+                              <File className="w-12 h-12 text-gray-400" />
+                            </div>
+                            <div className="flex items-center justify-between bg-green-50 rounded-lg p-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-green-700 truncate">{filePreviews.materialFile.name}</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveFile('materialFile')}
+                                className="text-red-600 hover:text-red-800 transition-colors ml-2 flex-shrink-0"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <File className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-600 mb-1 break-words">Upload file materi (opsional)</p>
+                            <p className="text-xs text-gray-500 mb-2 break-words">
+                              Format: {VALIDATION_RULES.files.materialFile.formats.join(', ')} | Maks: 200MB
+                            </p>
+                            <input
+                              type="file"
+                              accept={VALIDATION_RULES.files.materialFile.formats.join(',')}
+                              onChange={handleFileChange('materialFile')}
+                              disabled={loading}
+                              className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 sm:file:py-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
+                            />
+                          </>
+                        )}
                       </div>
                     </div>
 
-                    {/* Ringkasan Upload */}
+                    {/* Ringkasan Upload dengan Preview */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        File Ringkasan
+                        File Ringkasan (optional)
                       </label>
                       <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 sm:p-4 text-center hover:border-blue-500 transition-colors bg-gray-50">
-                        <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600 mb-1 break-words">Upload file ringkasan</p>
-                        <p className="text-xs text-gray-500 mb-2 break-words">
-                          Format: {VALIDATION_RULES.files.ringkasan.formats.join(', ')} | Maks: 10MB
-                        </p>
-                        <input
-                          type="file"
-                          accept={VALIDATION_RULES.files.ringkasan.formats.join(',')}
-                          onChange={handleFileChange('ringkasan')}
-                          disabled={loading}
-                          className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 sm:file:py-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
-                        />
+                        {filePreviews.ringkasan ? (
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-center bg-gray-100 rounded-lg p-4">
+                              <FileText className="w-12 h-12 text-gray-400" />
+                            </div>
+                            <div className="flex items-center justify-between bg-purple-50 rounded-lg p-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-purple-700 truncate">{filePreviews.ringkasan.name}</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveFile('ringkasan')}
+                                className="text-red-600 hover:text-red-800 transition-colors ml-2 flex-shrink-0"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-600 mb-1 break-words">Upload file ringkasan (opsional)</p>
+                            <p className="text-xs text-gray-500 mb-2 break-words">
+                              Format: {VALIDATION_RULES.files.ringkasan.formats.join(', ')} | Maks: 200MB
+                            </p>
+                            <input
+                              type="file"
+                              accept={VALIDATION_RULES.files.ringkasan.formats.join(',')}
+                              onChange={handleFileChange('ringkasan')}
+                              disabled={loading}
+                              className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 sm:file:py-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
+                            />
+                          </>
+                        )}
                       </div>
                     </div>
 
-                    {/* Template Upload */}
+                    {/* Template Upload dengan Preview */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        File Template
+                        File Template (optional)
                       </label>
                       <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 sm:p-4 text-center hover:border-blue-500 transition-colors bg-gray-50">
-                        <File className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600 mb-1 break-words">Upload file template</p>
-                        <p className="text-xs text-gray-500 mb-2 break-words">
-                          Format: {VALIDATION_RULES.files.template.formats.join(', ')} | Maks: 10MB
-                        </p>
-                        <input
-                          type="file"
-                          accept={VALIDATION_RULES.files.template.formats.join(',')}
-                          onChange={handleFileChange('template')}
-                          disabled={loading}
-                          className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 sm:file:py-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
-                        />
+                        {filePreviews.template ? (
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-center bg-gray-100 rounded-lg p-4">
+                              <File className="w-12 h-12 text-gray-400" />
+                            </div>
+                            <div className="flex items-center justify-between bg-orange-50 rounded-lg p-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-orange-700 truncate">{filePreviews.template.name}</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveFile('template')}
+                                className="text-red-600 hover:text-red-800 transition-colors ml-2 flex-shrink-0"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <File className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-600 mb-1 break-words">Upload file template (opsional)</p>
+                            <p className="text-xs text-gray-500 mb-2 break-words">
+                              Format: {VALIDATION_RULES.files.template.formats.join(', ')} | Maks: 200MB
+                            </p>
+                            <input
+                              type="file"
+                              accept={VALIDATION_RULES.files.template.formats.join(',')}
+                              onChange={handleFileChange('template')}
+                              disabled={loading}
+                              className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 sm:file:py-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
+                            />
+                          </>
+                        )}
                       </div>
                     </div>
 
-                    {/* Thumbnail Upload */}
+                    {/* Thumbnail Upload dengan Preview */}
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Thumbnail
+                        Thumbnail (optional)
                       </label>
                       <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 sm:p-4 text-center hover:border-blue-500 transition-colors bg-gray-50">
-                        <ImageIcon className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600 mb-1 break-words">Upload thumbnail materi</p>
-                        <p className="text-xs text-gray-500 mb-2 break-words">
-                          Format: {VALIDATION_RULES.files.thumnail.formats.join(', ')} | Maks: 5MB
-                        </p>
-                        <input
-                          type="file"
-                          accept={VALIDATION_RULES.files.thumnail.formats.join(',')}
-                          onChange={handleFileChange('thumnail')}
-                          disabled={loading}
-                          className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 sm:file:py-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
-                        />
+                        {filePreviews.thumnail ? (
+                          <div className="space-y-3">
+                            <div className="flex justify-center">
+                              <div className="relative w-32 h-32 rounded-lg overflow-hidden bg-gray-100">
+                                <img 
+                                  src={filePreviews.thumnail} 
+                                  alt="Preview thumbnail"
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between bg-yellow-50 rounded-lg p-2">
+                              <span className="text-sm text-yellow-700 truncate flex-1">
+                                Thumbnail dipilih
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveFile('thumnail')}
+                                className="text-red-600 hover:text-red-800 transition-colors ml-2"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <ImageIcon className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-600 mb-1 break-words">Upload thumbnail materi (opsional)</p>
+                            <p className="text-xs text-gray-500 mb-2 break-words">
+                              Format: {VALIDATION_RULES.files.thumnail.formats.join(', ')} | Maks: 5MB
+                            </p>
+                            <input
+                              type="file"
+                              accept={VALIDATION_RULES.files.thumnail.formats.join(',')}
+                              onChange={handleFileChange('thumnail')}
+                              disabled={loading}
+                              className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 sm:file:py-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
+                            />
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

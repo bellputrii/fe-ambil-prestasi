@@ -44,6 +44,13 @@ interface ApiResponse {
   }
 }
 
+// Interface untuk response categories API
+interface CategoriesApiResponse {
+  success: boolean
+  message?: string
+  data: Category[]
+}
+
 // Helper function to get valid image URL
 const getValidImageUrl = (path: string | null | undefined): string => {
   if (!path) return '';
@@ -71,17 +78,13 @@ export default function TeacherHome() {
   const [classes, setClasses] = useState<Class[]>([])
   const [filteredClasses, setFilteredClasses] = useState<Class[]>([])
   const [displayedClasses, setDisplayedClasses] = useState<Class[]>([])
-  const [categories] = useState<Category[]>([
-    { id: 1, name: 'Essay' },
-    { id: 2, name: 'Bussiness Plan' },
-    { id: 3, name: 'Penelitian' },
-    { id: 4, name: 'Desain' }
-  ])
+  const [categories, setCategories] = useState<Category[]>([]) // Changed from static to state
   const [activeFilter, setActiveFilter] = useState<number | 'all'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingClass, setEditingClass] = useState<Class | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadingCategories, setLoadingCategories] = useState(true) // New state for categories loading
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -103,15 +106,65 @@ export default function TeacherHome() {
     className: ''
   })
 
+  // Fungsi untuk fetch categories dari API
+  const fetchCategories = async () => {
+    try {
+      setLoadingCategories(true)
+      
+      const token = localStorage.getItem("token")
+      
+      if (!token) {
+        setError('Token tidak ditemukan. Silakan login kembali.')
+        setLoadingCategories(false)
+        return
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+        redirect: "follow" as RequestRedirect
+      })
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem("token")
+          setError('Sesi telah berakhir. Silakan login kembali.')
+          setTimeout(() => router.push('/auth/login'), 2000)
+          return
+        }
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const result: CategoriesApiResponse = await response.json()
+      
+      if (result.success && result.data) {
+        // Sort categories by id untuk konsistensi
+        const sortedCategories = result.data.sort((a, b) => a.id - b.id)
+        setCategories(sortedCategories)
+      } else {
+        throw new Error(result.message || 'Gagal memuat data kategori')
+      }
+    } catch (err) {
+      console.error('Error fetching categories:', err)
+      setMessageFailed('Gagal memuat data kategori')
+      // Fallback categories jika API error
+      setCategories([
+        { id: 1, name: 'Essay' },
+        { id: 2, name: 'Business Plan' },
+        { id: 3, name: 'Penelitian' },
+        { id: 4, name: 'Desain' }
+      ])
+    } finally {
+      setLoadingCategories(false)
+    }
+  }
+
   // Fungsi untuk map category
   const mapCategory = (categoryId: number): string => {
-    const categoryMap: { [key: number]: string } = {
-      1: 'Essay',
-      2: 'Business Plan',
-      3: 'Penelitian',
-      4: 'Desain'
-    }
-    return categoryMap[categoryId] || 'Kursus'
+    const category = categories.find(cat => cat.id === categoryId)
+    return category ? category.name : 'Kursus'
   }
 
   // Auto hide messages after 5 seconds
@@ -284,6 +337,7 @@ export default function TeacherHome() {
   ]
 
   useEffect(() => {
+    fetchCategories() // Fetch categories first
     fetchClasses()
   }, [])
 
@@ -939,7 +993,7 @@ export default function TeacherHome() {
                       required
                       value={formData.categoryId}
                       onChange={handleInputChange}
-                      disabled={loading}
+                      disabled={loading || loadingCategories}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:opacity-50 bg-white"
                     >
                       <option value="">Pilih Kategori</option>
@@ -949,6 +1003,9 @@ export default function TeacherHome() {
                         </option>
                       ))}
                     </select>
+                    {loadingCategories && (
+                      <p className="text-sm text-gray-500 mt-1">Memuat kategori...</p>
+                    )}
                   </div>
                 </div>
 
